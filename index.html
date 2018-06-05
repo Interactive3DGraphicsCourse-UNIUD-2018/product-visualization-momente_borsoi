@@ -34,12 +34,13 @@
 		<script type="text/x-glsl" id="vertex">
 		varying vec3 vNormal;
 		varying vec3 vPosition;
+		varying vec3 wPosition;
 		varying vec2 uVv;
-
 
 		void main() {
 			vec4 vPos = modelViewMatrix * vec4( position, 1.0 );
 			vPosition = vPos.xyz;
+			wPosition = (modelMatrix * vec4( position, 1.0 )).xyz;
 			vNormal = normalMatrix * normal;
 			uVv = uv;
 			gl_Position = projectionMatrix * vPos;
@@ -52,16 +53,20 @@
 			varying vec2 uVv;
 			uniform vec3 pointLightPosition; // in world space
 			uniform vec3 clight;
-			uniform float roughness;
-			uniform sampler2D normalMap;
-			uniform sampler2D diffuseMap;
+
 			uniform sampler2D specularMap;
-			uniform vec2 normalScale;
-			uniform vec2 textureRepeat;
+			uniform sampler2D diffuseMap;
+			uniform sampler2D roughnessMap;
+			uniform sampler2D normalMap;
+			uniform sampler2D aoMap;
+
+			uniform samplerCube irradianceMap;
+
 			const float PI = 3.14159;
 
 			vec3 cdiff;
 			vec3 cspec;
+			float roughness;
 
 			vec3 FSchlick(float lDoth) {
 				return (cspec + (vec3(1.0)-cspec)*pow(1.0 - lDoth,5.0));
@@ -96,10 +101,14 @@
 			vec3 N =  surf_norm ;
 
 			vec3 mapN = normalize(texture2D( normalMap, uVv ).xyz * 2.0 - 1.0);
-			mapN.xy = normalScale * mapN.xy;
 			mat3 tsn = mat3( S, T, N );
 			return normalize( tsn * mapN );
 
+		}
+
+        // http://en.wikibooks.org/wiki/GLSL_Programming/Applying_Matrix_Transformations
+		vec3 inverseTransformDirection( in vec3 dir, in mat4 matrix ) {
+			return normalize( ( vec4( dir, 0.0 ) * matrix ).xyz );
 		}
 
 			void main() {
@@ -114,19 +123,24 @@
 				float nDoth = max(dot( n, h ),0.000001);
 				float vDoth = max(dot( v, h ),0.000001);
 				float nDotv = max(dot( n, v ),0.000001);
-				vec3 fresnel = FSchlick(lDoth);
+
+                vec3 worldN = inverseTransformDirection( n, viewMatrix );
+				vec3 irradiance = textureCube( irradianceMap, worldN).rgb;
+				// texture in sRGB, linearize
+				irradiance = pow( irradiance, vec3(2.2));
 
 				cdiff = texture2D( diffuseMap, uVv*textureRepeat ).rgb;
 				// texture in sRGB, linearize
 				cdiff = pow( cdiff, vec3(2.2));
-
 				cspec = texture2D( specularMap, uVv*textureRepeat ).rgb;
 				// texture in sRGB, linearize
 				cspec = pow( cspec, vec3(2.2));
+				roughness = texture2D( roughnessMap, uVv ).r; // no need to linearize roughness map
 
+				vec3 fresnel = FSchlick(lDoth);
 				vec3 BRDF = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl)*DGGX(nDoth,roughness*roughness)/
 					(4.0*nDotl*nDotv);
-				vec3 outRadiance = PI* clight * nDotl * BRDF;
+				vec3 outRadiance = PI* clight * nDotl * BRDF + irradiance*cdiff*texture2D( aoMap, uVv ).xyz;
 				// gamma encode the final value
 				gl_FragColor = vec4(pow( outRadiance, vec3(1.0/2.2)), 1.0);
 			}
@@ -164,14 +178,15 @@
 
 			var uniforms = {
 				    // cspec:	{ type: "v3", value: new THREE.Vector3(0.04,0.04,0.04) },
-				    roughness: {type: "f", value: 0.7},
+				    roughnessMap: {},
+					irradianceMap: {},
+					aoMap: {},
 					normalMap:	{ type: "t", value: normalMap},
 					diffuseMap:	{ type: "t", value: diffuseMap},
 					specularMap:	{ type: "t", value: specularMap},
-					normalScale: {type: "v2", value: new THREE.Vector2(1,1)},
 					pointLightPosition:	{ type: "v3", value: new THREE.Vector3() },
 					clight:	{ type: "v3", value: new THREE.Vector3() },
-					textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) }
+					//textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) }
 					};
 
 			vs = document.getElementById("vertex").textContent;
@@ -187,7 +202,7 @@
 					mesh.scale.multiplyScalar( 0.1 );
 					scene.add( mesh );
 				} );
-			
+
 
 			var lightMesh = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
 				new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
