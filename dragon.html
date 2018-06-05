@@ -150,17 +150,16 @@
 			}
 
 			var textureParameters = {
-				material: "dino",
+				material: "body",
 				repeatS: 1.0,
 				repeatT: 1.0,
-				normalScale: 0.0,
+				normalScale: 1.0,
 			}
 
-			var path = "model/dino/";
+			var path = "model/dragon/texture/";
 			var normalMap = loadTexture( path + textureParameters.material + "_normal.jpg" );
 			var diffuseMap = loadTexture( path + textureParameters.material + "_diffuse.jpg" );
 			var specularMap = loadTexture( path + textureParameters.material + "_specular.jpg" );
-
 
 			var uniforms = {
 				    roughness: {type: "f", value: 0.7},
@@ -179,12 +178,18 @@
 			var ourMaterial = new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: vs, fragmentShader: fs });
 
 			var loader = new THREE.OBJLoader();
-				loader.load( "model/dino/dino.obj", function ( group ) {
-					geometry = group.children[ 0 ].geometry;
-					geometry.center();
-					mesh = new THREE.Mesh( geometry, ourMaterial );
-					mesh.scale.multiplyScalar( 0.1 );
-					scene.add( mesh );
+				loader.load( "model/dragon/dragon.obj", function ( group ) {
+                    //for(let i=0; i<group.children.length; i++){
+                    for(let i=19; i<20; i++){	
+                    	console.log("name"+i+": "+group.children[i].name);
+                        geometry = group.children[ i ].geometry;
+    					geometry.center();
+    					mesh = new THREE.Mesh( geometry, ourMaterial );
+    					mesh.scale.multiplyScalar( 0.01 );
+                        mesh.position.set(0,0,0);
+    					scene.add( mesh );
+                    }
+
 				} );
 			
 
@@ -275,7 +280,6 @@
 				lightSettings.add(lightParameters,'intensity').min(0).max(10000).onChange( function(newVal) { render() });
 
 				textureSettings = gui.addFolder('Texture parameters');
-				textureSettings.add(textureParameters,'normalScale').min(-3).max(3).onChange( function( newVal ) {render()});
 				textureSettings.add(textureParameters,'normalScale').min(-3).max(3).onChange( function( newVal ) {render()});
 				}
 
