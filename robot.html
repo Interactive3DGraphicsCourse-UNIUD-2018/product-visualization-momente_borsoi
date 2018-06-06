@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - normal mapping</title>
+		<title>Robot</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -28,6 +28,8 @@
 		<script src="lib/OrbitControls.js"></script>
 		<script src='lib/dat.gui.min.js'></script>
 		<script src='lib/OBJLoader.js'></script>
+		<script src='lib/OBJLoader.js'></script>
+		<script type='text/javascript' src='tween.js/src/Tween.js'></script>
 
 		<!-- shaders -->
 
@@ -105,6 +107,9 @@
 			var controls = new THREE.OrbitControls( camera, renderer.domElement );
 			var scene = new THREE.Scene();
 
+			controls = new THREE.OrbitControls( camera );
+			controls.addEventListener( 'change', render );
+
 			// default: white, 1.0 intensity
 			var lightParameters = {
 				red: 1.0,
@@ -142,46 +147,58 @@
 
 			var leg_pivot = new THREE.Object3D();
 			var loader = new THREE.OBJLoader();
-				loader.load( "model/robot/leg4_tri.obj", function ( group ) {
-					geometry = group.children[ 0 ].geometry;
-					geometry.center();
-					var mesh = new THREE.Mesh( geometry, ourMaterial );
-					mesh.scale.multiplyScalar( 0.1 );
-					leg_pivot.add( mesh );
-				} );
-				loader.load( "model/robot/leg3_tri.obj", function ( group ) {
-					geometry = group.children[ 0 ].geometry;
-					geometry.center();
-					var mesh = new THREE.Mesh( geometry, ourMaterial );
-					mesh.position.set(0.2,4,-2);
-					mesh.scale.multiplyScalar( 0.1 );
-					leg_pivot.add( mesh );
-				} );
-				loader.load( "model/robot/leg2_tri.obj", function ( group ) {
-					geometry = group.children[ 0 ].geometry;
-					geometry.center();
-					var mesh = new THREE.Mesh( geometry, ourMaterial );
-					mesh.position.set(1.5,6,-8);
-					mesh.scale.multiplyScalar( 0.1 );
-					leg_pivot.add( mesh );
-				} );
-				loader.load( "model/robot/leg1_tri.obj", function ( group ) {
-					geometry = group.children[ 0 ].geometry;
-					geometry.center();
-					var mesh = new THREE.Mesh( geometry, ourMaterial );
-					mesh.position.set(2,6,-13);
-					mesh.scale.multiplyScalar( 0.1 );
-					leg_pivot.add( mesh );
-				} );
-				loader.load( "model/robot/body_tri.obj", function ( group ) {
-					geometry = group.children[ 0 ].geometry;
-					geometry.center();
-					var mesh = new THREE.Mesh( geometry, ourMaterial );
-					mesh.position.set(0,9.5,0);
-					mesh.rotation.y = 18*Math.PI/180;
-					mesh.scale.multiplyScalar( 0.1 );
-					scene.add( mesh );
-				} );
+
+			// var body;
+			// loader.load( "model/robot/body_tri.obj", function ( group ) {
+			// 	geometry = group.children[ 0 ].geometry;
+			// 	geometry.center();
+			// 	body = new THREE.Mesh( geometry, ourMaterial );
+			// 	body.position.set(0,9.5,0);
+			// 	body.rotation.y = 18*Math.PI/180;
+			// 	body.scale.multiplyScalar( 0.1 );
+			// 	leg_pivot.add( body );
+			// } );
+
+			var leg1 = new THREE.Object3D();
+			loader.load( "model/robot/leg1.obj", function ( group ) {
+				geometry = group.children[ 0 ].geometry;
+				geometry.center();
+				var mesh = new THREE.Mesh( geometry, ourMaterial );
+				mesh.scale.multiplyScalar( 0.1 );
+				leg1.add( mesh );
+			} );
+			leg1.position.set(-0.2,6,8);
+			leg_pivot.add(leg1);
+
+			// var leg2;
+			// loader.load( "model/robot/leg2_tri.obj", function ( group ) {
+			// 	geometry = group.children[ 0 ].geometry;
+			// 	geometry.center();
+			// 	leg2 = new THREE.Mesh( geometry, ourMaterial );
+			// 	leg2.position.set(1.5,6,-8);
+			// 	leg2.scale.multiplyScalar( 0.1 );
+			// 	scene.add( leg2 );
+			// } );
+
+			// var leg3;
+			// loader.load( "model/robot/leg3_tri.obj", function ( group ) {
+			// 	geometry = group.children[ 0 ].geometry;
+			// 	geometry.center();
+			// 	leg3 = new THREE.Mesh( geometry, ourMaterial );
+			// 	leg3.position.set(0.2,4,-2);
+			// 	leg3.scale.multiplyScalar( 0.1 );
+			// 	scene.add( leg3 );
+			// } );
+
+			// var foot;
+			// loader.load( "model/robot/leg4_tri.obj", function ( group ) {
+			// 	geometry = group.children[ 0 ].geometry;
+			// 	geometry.center();
+			// 	foot = new THREE.Mesh( geometry, ourMaterial );
+			// 	foot.scale.multiplyScalar( 0.1 );
+			// 	scene.add( foot );
+			// } );
+			
 
 			var lightMesh = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
 				new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
@@ -189,8 +206,9 @@
 			uniforms.pointLightPosition.value = new THREE.Vector3(lightMesh.position.x,	lightMesh.position.y, lightMesh.position.z);
 
 			leg_pivot.rotation.y = 9*Math.PI/180;
-			leg_pivot.position.z += 21;
+			// leg_pivot.position.z += 21;
 			scene.add(leg_pivot);
+
 			var axesHelper = new THREE.AxesHelper( 5 );
 			scene.add( axesHelper );
 
@@ -236,6 +254,7 @@
 
 				ourMaterial.needsUpdate = true;
 
+
 			}
 
 			function onResize() {
@@ -254,6 +273,7 @@
 
 			function render() {
 				updateUniforms();
+    			TWEEN.update();
 				renderer.render( scene, camera );
 
 			}
@@ -291,6 +311,19 @@
 					// uniforms.specularMap.value = specularMap;
 					// uniforms.roughnessMap.value = roughnessMap;
 			}
+
+			//////////////////////////////////////////////
+			var tweenHead = new TWEEN.Tween(leg_pivot.rotation).to({ y: -(90 * Math.PI / 180)}, 1000).delay(100).easing(TWEEN.Easing.Bounce.Out);
+			var tweenBack = new TWEEN.Tween(leg_pivot.rotation).to({ y: 0}, 1000).delay(100).easing(TWEEN.Easing.Bounce.Out);
+			// tween.onUpdate(function() {
+			//     leg_pivot.rotation.y = rotation.y;
+			// });
+			tweenHead.chain(tweenBack);
+			tweenBack.chain(tweenHead);
+
+			tweenHead.start();
+			/////////////////////////////////////////////
+
 
 			init();
 			buildGui();
