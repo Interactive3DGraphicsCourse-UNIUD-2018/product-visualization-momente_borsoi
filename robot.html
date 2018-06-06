@@ -142,14 +142,14 @@
 
 			var leg_pivot = new THREE.Object3D();
 			var loader = new THREE.OBJLoader();
-				loader.load( "model/robot/leg4.obj", function ( group ) {
+				loader.load( "model/robot/leg4_tri.obj", function ( group ) {
 					geometry = group.children[ 0 ].geometry;
 					geometry.center();
 					var mesh = new THREE.Mesh( geometry, ourMaterial );
 					mesh.scale.multiplyScalar( 0.1 );
 					leg_pivot.add( mesh );
 				} );
-				loader.load( "model/robot/leg3.obj", function ( group ) {
+				loader.load( "model/robot/leg3_tri.obj", function ( group ) {
 					geometry = group.children[ 0 ].geometry;
 					geometry.center();
 					var mesh = new THREE.Mesh( geometry, ourMaterial );
@@ -157,7 +157,7 @@
 					mesh.scale.multiplyScalar( 0.1 );
 					leg_pivot.add( mesh );
 				} );
-				loader.load( "model/robot/leg2.obj", function ( group ) {
+				loader.load( "model/robot/leg2_tri.obj", function ( group ) {
 					geometry = group.children[ 0 ].geometry;
 					geometry.center();
 					var mesh = new THREE.Mesh( geometry, ourMaterial );
@@ -165,7 +165,7 @@
 					mesh.scale.multiplyScalar( 0.1 );
 					leg_pivot.add( mesh );
 				} );
-				loader.load( "model/robot/leg1.obj", function ( group ) {
+				loader.load( "model/robot/leg1_tri.obj", function ( group ) {
 					geometry = group.children[ 0 ].geometry;
 					geometry.center();
 					var mesh = new THREE.Mesh( geometry, ourMaterial );
@@ -173,7 +173,7 @@
 					mesh.scale.multiplyScalar( 0.1 );
 					leg_pivot.add( mesh );
 				} );
-				loader.load( "model/robot/body_upgrade.obj", function ( group ) {
+				loader.load( "model/robot/body_tri.obj", function ( group ) {
 					geometry = group.children[ 0 ].geometry;
 					geometry.center();
 					var mesh = new THREE.Mesh( geometry, ourMaterial );

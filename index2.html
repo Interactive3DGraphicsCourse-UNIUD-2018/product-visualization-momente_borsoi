@@ -152,15 +152,15 @@
             var ourMaterial = new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: vs, fragmentShader: fs });
 
 			var loader = new THREE.OBJLoader();
-				loader.load( "model/robot/body_upgrade.obj", function ( group ) {
+				loader.load( "model/robot/Robot.obj", function ( group ) {
                     //for(let i=0; i<group.children.length; i++){
-                    for(let i=19; i<20; i++){	
+                    for(let i=0; i<group.children.length; i++){	
                     	console.log("name"+i+": "+group.children[i].name);
                         geometry = group.children[ i ].geometry;
     					geometry.center();
     					mesh = new THREE.Mesh( geometry, ourMaterial );
     					mesh.scale.multiplyScalar( 0.01 );
-                        mesh.position.set(0,0,0);
+                        mesh.position.set(0,i,0);
     					scene.add( mesh );
                     }
 
