@@ -170,12 +170,12 @@
 				normalScale: 0.0,
 			}
 
-			var path = "model/robot/leg2/";
-			var normalMap = loadTexture( path + "Norm.png" );
-			var diffuseMap = loadTexture( path + "Diff.png" );
-			var specularMap = loadTexture( path + "Spec.png" );
+			var path = "model/robot/exported/body/";
+			var normalMap = loadTexture( path + "norm.png" );
+			var diffuseMap = loadTexture( path + "diff.png" );
+			var specularMap = loadTexture( path + "spec.png" );
 			//var roughnessMap = loadTexture( path + "Rough.png" );
-			var aoMap = loadTexture( path + "AO.png" );
+			var aoMap = loadTexture( path + "ao.png" );
 
 			// load cube map for background
 			var loaderC = new THREE.CubeTextureLoader();
@@ -206,7 +206,7 @@
 			var ourMaterial = new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: vs, fragmentShader: fs });
 
 			var loader = new THREE.OBJLoader();
-			loader.load( "model/robot/leg2/leg2exp.obj", function ( group ) {
+			loader.load( "model/robot/exported/body/bodyexp.obj", function ( group ) {
 				geometry = group.children[ 0 ].geometry;
 				geometry.center();
 				mesh = new THREE.Mesh( geometry, ourMaterial );
