@@ -49,19 +49,12 @@
 		<script type="text/x-glsl" id="fragment">
 			varying vec3 vNormal;
 			varying vec3 vPosition;
-			varying vec2 uVv;
 			uniform vec3 pointLightPosition; // in world space
 			uniform vec3 clight;
+			uniform vec3 cspec;
+			uniform vec3 cdiff;
 			uniform float roughness;
-			uniform sampler2D normalMap;
-			uniform sampler2D diffuseMap;
-			uniform sampler2D specularMap;
-			uniform vec2 normalScale;
-			uniform vec2 textureRepeat;
 			const float PI = 3.14159;
-
-			vec3 cdiff;
-			vec3 cspec;
 
 			vec3 FSchlick(float lDoth) {
 				return (cspec + (vec3(1.0)-cspec)*pow(1.0 - lDoth,5.0));
@@ -82,30 +75,10 @@
 					return G1(nDotl,k)*G1(nDotv,k);
 			}
 
-			#extension GL_OES_standard_derivatives : enable
-
-		vec3 perturbNormal2Arb( vec3 eye_pos, vec3 surf_norm ) {
-
-			vec3 q0 = dFdx( eye_pos.xyz );
-			vec3 q1 = dFdy( eye_pos.xyz );
-			vec2 st0 = dFdx( uVv.st );
-			vec2 st1 = dFdy( uVv.st );
-
-			vec3 S = normalize(  q0 * st1.t - q1 * st0.t );
-			vec3 T = normalize( -q0 * st1.s + q1 * st0.s );
-			vec3 N =  surf_norm ;
-
-			vec3 mapN = normalize(texture2D( normalMap, uVv ).xyz * 2.0 - 1.0);
-			mapN.xy = normalScale * mapN.xy;
-			mat3 tsn = mat3( S, T, N );
-			return normalize( tsn * mapN );
-
-		}
-
 			void main() {
 				vec4 lPosition = viewMatrix * vec4( pointLightPosition, 1.0 );
 				vec3 l = normalize(lPosition.xyz - vPosition.xyz);
-				vec3 n = perturbNormal2Arb( vPosition, normalize( vNormal ));
+				vec3 n = normalize( vNormal );  // interpolation destroys normalization, so we have to normalize
 				vec3 v = normalize( -vPosition);
 				vec3 h = normalize( v + l);
 				// small quantity to prevent divisions by 0
@@ -115,15 +88,6 @@
 				float vDoth = max(dot( v, h ),0.000001);
 				float nDotv = max(dot( n, v ),0.000001);
 				vec3 fresnel = FSchlick(lDoth);
-
-				cdiff = texture2D( diffuseMap, uVv*textureRepeat ).rgb;
-				// texture in sRGB, linearize
-				cdiff = pow( cdiff, vec3(2.2));
-
-				cspec = texture2D( specularMap, uVv*textureRepeat ).rgb;
-				// texture in sRGB, linearize
-				cspec = pow( cspec, vec3(2.2));
-
 				vec3 BRDF = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl)*DGGX(nDoth,roughness*roughness)/
 					(4.0*nDotl*nDotv);
 				vec3 outRadiance = PI* clight * nDotl * BRDF;
@@ -157,15 +121,14 @@
 			}
 
 			var path = "model/dragon/texture/";
-			var normalMap = loadTexture( path + textureParameters.material + "_normal.jpg" );
-			var diffuseMap = loadTexture( path + textureParameters.material + "_diffuse.jpg" );
-			var specularMap = loadTexture( path + textureParameters.material + "_specular.jpg" );
+			//var normalMap = loadTexture( path + textureParameters.material + "_normal.jpg" );
+			//var diffuseMap = loadTexture( path + textureParameters.material + "_diffuse.jpg" );
+			//var specularMap = loadTexture( path + textureParameters.material + "_specular.jpg" );
 
 			var uniforms = {
-				    roughness: {type: "f", value: 0.7},
-					normalMap:	{ type: "t", value: normalMap},
-					diffuseMap:	{ type: "t", value: diffuseMap},
-					specularMap:	{ type: "t", value: specularMap},
+					cspec:	{ type: "v3", value: new THREE.Vector3(255, 0, 0) },
+					cdiff:	{ type: "v3", value: new THREE.Vector3(255, 0, 0) },
+					roughness: {type: "f", value: 0.5},
 					normalScale: {type: "v2", value: new THREE.Vector2(1,1)},
 					pointLightPosition:	{ type: "v3", value: new THREE.Vector3() },
 					clight:	{ type: "v3", value: new THREE.Vector3() },
@@ -177,26 +140,59 @@
 
 			var ourMaterial = new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: vs, fragmentShader: fs });
 
+			var leg_pivot = new THREE.Object3D();
 			var loader = new THREE.OBJLoader();
-				loader.load( "model/dragon/dragon.obj", function ( group ) {
-                    //for(let i=0; i<group.children.length; i++){
-                    for(let i=19; i<20; i++){	
-                    	console.log("name"+i+": "+group.children[i].name);
-                        geometry = group.children[ i ].geometry;
-    					geometry.center();
-    					mesh = new THREE.Mesh( geometry, ourMaterial );
-    					mesh.scale.multiplyScalar( 0.01 );
-                        mesh.position.set(0,0,0);
-    					scene.add( mesh );
-                    }
-
+				loader.load( "model/robot/leg4.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, ourMaterial );
+					mesh.scale.multiplyScalar( 0.1 );
+					leg_pivot.add( mesh );
 				} );
-			
+				loader.load( "model/robot/leg3.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, ourMaterial );
+					mesh.position.set(0.2,4,-2);
+					mesh.scale.multiplyScalar( 0.1 );
+					leg_pivot.add( mesh );
+				} );
+				loader.load( "model/robot/leg2.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, ourMaterial );
+					mesh.position.set(1.5,6,-8);
+					mesh.scale.multiplyScalar( 0.1 );
+					leg_pivot.add( mesh );
+				} );
+				loader.load( "model/robot/leg1.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, ourMaterial );
+					mesh.position.set(2,6,-13);
+					mesh.scale.multiplyScalar( 0.1 );
+					leg_pivot.add( mesh );
+				} );
+				loader.load( "model/robot/body_upgrade.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, ourMaterial );
+					mesh.position.set(0,9.5,0);
+					mesh.rotation.y = 18*Math.PI/180;
+					mesh.scale.multiplyScalar( 0.1 );
+					scene.add( mesh );
+				} );
 
 			var lightMesh = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
 				new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
 			lightMesh.position.set( 7.0, 7.0, 7.0 );
 			uniforms.pointLightPosition.value = new THREE.Vector3(lightMesh.position.x,	lightMesh.position.y, lightMesh.position.z);
+
+			leg_pivot.rotation.y = 9*Math.PI/180;
+			leg_pivot.position.z += 21;
+			scene.add(leg_pivot);
+			var axesHelper = new THREE.AxesHelper( 5 );
+			scene.add( axesHelper );
 
 			var gui;
 			var stats = new Stats();
@@ -291,8 +287,8 @@
 						lightParameters.blue * lightParameters.intensity);
 					uniforms.normalScale.value = new THREE.Vector2( textureParameters.normalScale, textureParameters.normalScale );
 					uniforms.textureRepeat.value = new THREE.Vector2( textureParameters.repeatS, textureParameters.repeatT);
-					uniforms.diffuseMap.value = diffuseMap;
-					uniforms.specularMap.value = specularMap;
+					// uniforms.diffuseMap.value = diffuseMap;
+					// uniforms.specularMap.value = specularMap;
 					// uniforms.roughnessMap.value = roughnessMap;
 			}
 

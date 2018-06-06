@@ -152,7 +152,7 @@
             var ourMaterial = new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: vs, fragmentShader: fs });
 
 			var loader = new THREE.OBJLoader();
-				loader.load( "model/dragon/dragon.obj", function ( group ) {
+				loader.load( "model/robot/body_upgrade.obj", function ( group ) {
                     //for(let i=0; i<group.children.length; i++){
                     for(let i=19; i<20; i++){	
                     	console.log("name"+i+": "+group.children[i].name);
