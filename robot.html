@@ -29,7 +29,7 @@
 		<script src='lib/dat.gui.min.js'></script>
 		<script src='lib/OBJLoader.js'></script>
 		<script src='lib/OBJLoader.js'></script>
-		<script type='text/javascript' src='tween.js/src/Tween.js'></script>
+		<script type='text/javascript' src='tweenjs/Tween.js'></script>
 
 		<!-- shaders -->
 
@@ -149,16 +149,18 @@
 			scene.add(tot_leg_pivot);
 			var loader = new THREE.OBJLoader();
 
-			// var body;
-			// loader.load( "model/robot/body_tri.obj", function ( group ) {
-			// 	geometry = group.children[ 0 ].geometry;
-			// 	geometry.center();
-			// 	body = new THREE.Mesh( geometry, ourMaterial );
-			// 	body.position.set(0,9.5,0);
-			// 	body.rotation.y = 18*Math.PI/180;
-			// 	body.scale.multiplyScalar( 0.1 );
-			// 	leg_pivot.add( body );
-			// } );
+			var body;
+			loader.load( "model/robot/body_tri.obj", function ( group ) {
+				geometry = group.children[ 0 ].geometry;
+				geometry.center();
+				body = new THREE.Mesh( geometry, ourMaterial );
+				body.position.set(0,9.5,0);
+				body.rotation.y = 18*Math.PI/180;
+				body.scale.multiplyScalar( 0.1 );
+				scene.add( body );
+			} );
+
+			tot_leg_pivot.position.set(0,5.3,6.1);
 			
 			var leg1_pivot = new THREE.Object3D();
 			var leg1 = new THREE.Object3D();
