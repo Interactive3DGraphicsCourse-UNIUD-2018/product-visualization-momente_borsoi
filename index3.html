@@ -213,7 +213,7 @@
 				normalScale: 0.0,
 			}
 
-			var path = "model/robot/exported/body/";
+			var path = "model/robot/body/";
 			var normalMap = loadTexture( path + "norm.png" );
 			var diffuseMap = loadTexture( path + "diff.png" );
 			var specularMap = loadTexture( path + "spec.png" );
@@ -265,7 +265,7 @@
 			var ourMaterial = new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: vs, fragmentShader: fs,extensions: materialExtensions });
 
 			var loader = new THREE.OBJLoader();
-			loader.load( "model/robot/exported/body/bodyexp.obj", function ( group ) {
+			loader.load( "model/robot/body/bodyexp.obj", function ( group ) {
 				geometry = group.children[ 0 ].geometry;
 				geometry.center();
 				mesh = new THREE.Mesh( geometry, ourMaterial );
