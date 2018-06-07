@@ -126,12 +126,12 @@
 			}
 
 			var uniforms = {
-					cspec:	{ type: "v3", value: new THREE.Vector3(255, 255, 0) },
-					cdiff:	{ type: "v3", value: new THREE.Vector3(255, 255, 0) },
+					cspec:	{ type: "v3", value: new THREE.Vector3(1, 1, 0) },
+					cdiff:	{ type: "v3", value: new THREE.Vector3(1, 1, 0) },
 					roughness: {type: "f", value: 0.5},
 					normalScale: {type: "v2", value: new THREE.Vector2(1,1)},
 					pointLightPosition:	{ type: "v3", value: new THREE.Vector3() },
-					clight:	{ type: "v3", value: new THREE.Vector3() },
+					clight:	{ type: "v3", value: new THREE.Vector3(1,1,1) },
 					textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) }
 					};
 
@@ -147,7 +147,7 @@
 			lightMesh.position.set( 7.0, 7.0, 7.0 );
 			uniforms.pointLightPosition.value = new THREE.Vector3(lightMesh.position.x,	lightMesh.position.y, lightMesh.position.z);
 
-			
+
 
 			var axesHelper = new THREE.AxesHelper( 20 );
 			scene.add( axesHelper );
@@ -314,7 +314,7 @@
 
 				return tot_leg_pivot;
 
-			}	
+			}
 
 			function onResize() {
 				renderer.setSize( window.innerWidth, window.innerHeight );
@@ -335,12 +335,12 @@
 			}
 
 			function updateUniforms() {
-					uniforms.clight.value = new THREE.Vector3(
+					/*uniforms.clight.value = new THREE.Vector3(
 						lightParameters.red * lightParameters.intensity,
 					    lightParameters.green * lightParameters.intensity,
 						lightParameters.blue * lightParameters.intensity);
 					uniforms.normalScale.value = new THREE.Vector2( textureParameters.normalScale, textureParameters.normalScale );
-			}
+			*/}
 
 
 

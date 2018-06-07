@@ -48,6 +48,8 @@
 		</script>
 
 		<script type="text/x-glsl" id="fragment">
+			precision highp float;
+			precision highp int;
 			varying vec3 vNormal;
 			varying vec3 vPosition;
 			varying vec2 uVv;
@@ -61,8 +63,14 @@
 			uniform sampler2D aoMap;
 
 			uniform samplerCube irradianceMap;
+			uniform samplerCube envMap;
 
 			const float PI = 3.14159;
+
+			#define saturate(a) clamp( a, 0.0, 1.0 )
+
+
+			#extension GL_OES_standard_derivatives : enable
 
 			vec3 cdiff;
 			vec3 cspec;
@@ -87,7 +95,6 @@
 					return G1(nDotl,k)*G1(nDotv,k);
 			}
 
-			#extension GL_OES_standard_derivatives : enable
 
 		vec3 perturbNormal2Arb( vec3 eye_pos, vec3 surf_norm ) {
 
@@ -111,11 +118,38 @@
 			return normalize( ( vec4( dir, 0.0 ) * matrix ).xyz );
 		}
 
+
+		float pow2( const in float x ) { return x*x; }
+
+		float getSpecularMIPLevel( const in float blinnShininessExponent, const in int maxMIPLevel ) {
+			float maxMIPLevelScalar = float( maxMIPLevel );
+			float desiredMIPLevel = maxMIPLevelScalar - 0.79248 - 0.5 * log2( pow2( blinnShininessExponent ) + 1.0 );
+			return clamp( desiredMIPLevel, 0.0, maxMIPLevelScalar );
+		}
+
+		float GGXRoughnessToBlinnExponent( const in float ggxRoughness ) {
+			return ( 2.0 / pow2( ggxRoughness + 0.0001 ) - 2.0 );
+	  	}
+
+		vec3 BRDF_Specular_GGX_Environment( vec3 normal, vec3 viewDir, const in vec3 cspec, const in float roughness ) {
+
+			float dotNV = saturate( dot( normal, viewDir ) );
+			const vec4 c0 = vec4( - 1, - 0.0275, - 0.572, 0.022 );
+			const vec4 c1 = vec4( 1, 0.0425, 1.04, - 0.04 );
+			vec4 r = roughness * c0 + c1;
+			float a004 = min( r.x * r.x, exp2( - 9.28 * dotNV ) ) * r.x + r.y;
+			vec2 AB = vec2( -1.04, 1.04 ) * a004 + r.zw;
+			return cspec * AB.x + AB.y;
+
+		}
+
 			void main() {
 				vec4 lPosition = viewMatrix * vec4( pointLightPosition, 1.0 );
 				vec3 l = normalize(lPosition.xyz - vPosition.xyz);
 				vec3 n = perturbNormal2Arb( vPosition, normalize( vNormal ));
 				vec3 v = normalize( -vPosition);
+				vec3 vReflect = reflect(vPosition,n);
+				vec3 r = inverseTransformDirection( vReflect, viewMatrix );
 				vec3 h = normalize( v + l);
 				// small quantity to prevent divisions by 0
 				float nDotl = max(dot( n, l ),0.000001);
@@ -137,10 +171,19 @@
 				cspec = pow( cspec, vec3(2.2));
 				roughness = texture2D( roughnessMap, uVv ).r; // no need to linearize roughness map
 
+
+				float blinnShininessExponent = GGXRoughnessToBlinnExponent(roughness);
+				float specularMIPLevel = getSpecularMIPLevel(blinnShininessExponent ,8 );
+
+	 			vec3 envLight = textureCubeLodEXT( envMap, vec3(-r.x, r.yz), specularMIPLevel ).rgb;
+	 			// texture in sRGB, linearize
+				envLight = pow( envLight, vec3(2.2));
+
+
 				vec3 fresnel = FSchlick(lDoth);
 				vec3 BRDF = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl)*DGGX(nDoth,roughness*roughness)/
 					(4.0*nDotl*nDotv);
-				vec3 outRadiance = PI* clight * nDotl * BRDF + irradiance*cdiff*texture2D( aoMap, uVv ).xyz;
+				vec3 outRadiance = PI* clight * nDotl * BRDF + irradiance*cdiff*pow( texture2D( aoMap, uVv ).xyz, vec3(2.2)) + envLight*BRDF_Specular_GGX_Environment(n, v, cspec, roughness);
 				// gamma encode the final value
 				gl_FragColor = vec4(pow( outRadiance, vec3(1.0/2.2)), 1.0);
 			}
@@ -187,6 +230,17 @@
 					'pz.png', 'nz.png'
 			] );
 
+			var loaderE = new THREE.CubeTextureLoader();
+			loaderE.setPath( 'images/Helipad_GoldenHour/reflection/' );
+
+			var textureCube = loaderE.load( [
+				'px.png', 'nx.png',
+				'py.png', 'ny.png',
+				'pz.png', 'nz.png'
+			] );
+
+			scene.background = textureCube;
+
 			var uniforms = {
 				    // cspec:	{ type: "v3", value: new THREE.Vector3(0.04,0.04,0.04) },
 				    //roughnessMap: { type: "t", value: roughnessMap},
@@ -197,13 +251,18 @@
 					//specularMap:	{ type: "t", value: specularMap},
 					pointLightPosition:	{ type: "v3", value: new THREE.Vector3() },
 					clight:	{ type: "v3", value: new THREE.Vector3(1,1,1) },
-					//textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) }
+					//textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) },
+					envMap:	{ type: "t", value: textureCube},
 					};
 
 			vs = document.getElementById("vertex").textContent;
 			fs = document.getElementById("fragment").textContent;
+			materialExtensions = {
+				derivatives: true, // set to use derivatives
+				shaderTextureLOD: true // set to use shader texture LOD
+			};
 
-			var ourMaterial = new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: vs, fragmentShader: fs });
+			var ourMaterial = new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: vs, fragmentShader: fs,extensions: materialExtensions });
 
 			var loader = new THREE.OBJLoader();
 			loader.load( "model/robot/exported/body/bodyexp.obj", function ( group ) {
