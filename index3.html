@@ -32,6 +32,8 @@
 		<!-- shaders -->
 
 		<script type="text/x-glsl" id="vertex">
+		precision highp float;
+		precision highp int;
 		varying vec3 vNormal;
 		varying vec3 vPosition;
 		varying vec3 wPosition;
@@ -41,7 +43,7 @@
 			vec4 vPos = modelViewMatrix * vec4( position, 1.0 );
 			vPosition = vPos.xyz;
 			wPosition = (modelMatrix * vec4( position, 1.0 )).xyz;
-			vNormal = normalMatrix * normal;
+			vNormal = normalize(normalMatrix * normal);
 			uVv = uv;
 			gl_Position = projectionMatrix * vPos;
 		}
@@ -69,6 +71,8 @@
 
 			#define saturate(a) clamp( a, 0.0, 1.0 )
 
+			float pow2( const in float x ) { return x*x; }
+
 
 			#extension GL_OES_standard_derivatives : enable
 
@@ -95,6 +99,16 @@
 					return G1(nDotl,k)*G1(nDotv,k);
 			}
 
+			float getSpecularMIPLevel( const in float blinnShininessExponent, const in int maxMIPLevel ) {
+				float maxMIPLevelScalar = float( maxMIPLevel );
+				float desiredMIPLevel = maxMIPLevelScalar - 0.79248 - 0.5 * log2( pow2( blinnShininessExponent ) + 1.0 );
+				return clamp( desiredMIPLevel, 0.0, maxMIPLevelScalar );
+			}
+
+			float GGXRoughnessToBlinnExponent( const in float ggxRoughness ) {
+				return ( 2.0 / pow2( ggxRoughness + 0.0001 ) - 2.0 );
+		  	}
+
 
 		vec3 perturbNormal2Arb( vec3 eye_pos, vec3 surf_norm ) {
 
@@ -118,19 +132,6 @@
 			return normalize( ( vec4( dir, 0.0 ) * matrix ).xyz );
 		}
 
-
-		float pow2( const in float x ) { return x*x; }
-
-		float getSpecularMIPLevel( const in float blinnShininessExponent, const in int maxMIPLevel ) {
-			float maxMIPLevelScalar = float( maxMIPLevel );
-			float desiredMIPLevel = maxMIPLevelScalar - 0.79248 - 0.5 * log2( pow2( blinnShininessExponent ) + 1.0 );
-			return clamp( desiredMIPLevel, 0.0, maxMIPLevelScalar );
-		}
-
-		float GGXRoughnessToBlinnExponent( const in float ggxRoughness ) {
-			return ( 2.0 / pow2( ggxRoughness + 0.0001 ) - 2.0 );
-	  	}
-
 		vec3 BRDF_Specular_GGX_Environment( vec3 normal, vec3 viewDir, const in vec3 cspec, const in float roughness ) {
 
 			float dotNV = saturate( dot( normal, viewDir ) );
@@ -148,8 +149,10 @@
 				vec3 l = normalize(lPosition.xyz - vPosition.xyz);
 				vec3 n = perturbNormal2Arb( vPosition, normalize( vNormal ));
 				vec3 v = normalize( -vPosition);
+
 				vec3 vReflect = reflect(vPosition,n);
 				vec3 r = inverseTransformDirection( vReflect, viewMatrix );
+
 				vec3 h = normalize( v + l);
 				// small quantity to prevent divisions by 0
 				float nDotl = max(dot( n, l ),0.000001);
@@ -183,7 +186,9 @@
 				vec3 fresnel = FSchlick(lDoth);
 				vec3 BRDF = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl)*DGGX(nDoth,roughness*roughness)/
 					(4.0*nDotl*nDotv);
-				vec3 outRadiance = PI* clight * nDotl * BRDF + irradiance*cdiff*pow( texture2D( aoMap, uVv ).xyz, vec3(2.2)) + envLight*BRDF_Specular_GGX_Environment(n, v, cspec, roughness);
+				vec3 outRadiance = PI* clight * nDotl * BRDF
+									+ irradiance*cdiff*texture2D( aoMap, uVv ).xyz
+									+ envLight*BRDF_Specular_GGX_Environment(n, v, cspec, roughness);
 				// gamma encode the final value
 				gl_FragColor = vec4(pow( outRadiance, vec3(1.0/2.2)), 1.0);
 			}
@@ -216,7 +221,7 @@
 			var path = "model/robot/body/";
 			var normalMap = loadTexture( path + "norm.png" );
 			var diffuseMap = loadTexture( path + "diff.png" );
-			var specularMap = loadTexture( path + "spec.png" );
+			var specularMap = loadTexture( path + "mir.png" );
 			//var roughnessMap = loadTexture( path + "Rough.png" );
 			var aoMap = loadTexture( path + "ao.png" );
 
@@ -241,6 +246,8 @@
 
 			scene.background = textureCube;
 
+			textureCube.minFilter = THREE.LinearMipMapLinearFilter;
+
 			var uniforms = {
 				    // cspec:	{ type: "v3", value: new THREE.Vector3(0.04,0.04,0.04) },
 				    //roughnessMap: { type: "t", value: roughnessMap},
@@ -248,7 +255,7 @@
 					aoMap: { type: "t", value: aoMap},
 					normalMap:	{ type: "t", value: normalMap},
 					diffuseMap:	{ type: "t", value: diffuseMap},
-					//specularMap:	{ type: "t", value: specularMap},
+					specularMap:	{ type: "t", value: specularMap},
 					pointLightPosition:	{ type: "v3", value: new THREE.Vector3() },
 					clight:	{ type: "v3", value: new THREE.Vector3(1,1,1) },
 					//textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) },
