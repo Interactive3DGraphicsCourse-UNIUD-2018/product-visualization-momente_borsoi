@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>three.js webgl - normal mapping</title>
+		<title>Robot</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<style>
@@ -28,6 +28,7 @@
 		<script src="lib/OrbitControls.js"></script>
 		<script src='lib/dat.gui.min.js'></script>
 		<script src='lib/OBJLoader.js'></script>
+		<script type='text/javascript' src='tweenjs/Tween.js'></script>
 
 		<!-- shaders -->
 
@@ -228,17 +229,10 @@
 				normalScale: 0.0,
 			}
 
-			var path = "model/robot/body/";
-			var normalMap = loadTexture( path + "norm.png" );
-			var diffuseMap = loadTexture( path + "diff.png" );
-			var specularMap = loadTexture( path + "mir.png" );
-			var roughnessMap = loadTexture( path + "norm.png" );
-			var aoMap = loadTexture( path + "ao.png" );
-
 			// load cube map for background
 			var loaderC = new THREE.CubeTextureLoader();
 			// load irradiance map
-			loaderC.setPath( 'images/Helipad_GoldenHour/irradiance/' );
+			loaderC.setPath( 'images/industrial_hall/irradiance/' );
 			var irradianceMap = loaderC.load( [
 					'px.png', 'nx.png',
 					'py.png', 'ny.png',
@@ -246,7 +240,8 @@
 			] );
 
 			var loaderE = new THREE.CubeTextureLoader();
-			loaderE.setPath( 'images/Helipad_GoldenHour/reflection/' );
+			//loaderE.setPath( 'images/Helipad_GoldenHour/reflection/' );
+			loaderE.setPath( 'images/industrial_hall/reflection/' );
 
 			var textureCube = loaderE.load( [
 				'px.png', 'nx.png',
@@ -258,57 +253,68 @@
 
 			textureCube.minFilter = THREE.LinearMipMapLinearFilter;
 
-			var uniforms = {
-				    // cspec:	{ type: "v3", value: new THREE.Vector3(0.04,0.04,0.04) },
-				    roughnessMap: { type: "t", value: roughnessMap},
-					irradianceMap: { type: "t", value: irradianceMap},
-					aoMap: { type: "t", value: aoMap},
-					normalMap:	{ type: "t", value: normalMap},
-					diffuseMap:	{ type: "t", value: diffuseMap},
-					specularMap:	{ type: "t", value: specularMap},
-					pointLightPosition:	{ type: "v3", value: new THREE.Vector3() },
-					clight:	{ type: "v3", value: new THREE.Vector3(1,1,1) },
-					//textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) },
-					envMap:	{ type: "t", value: textureCube},
-					normalScale: {type: "v2", value: new THREE.Vector2(1,1)},
-					};
-
-			vs = document.getElementById("vertex").textContent;
-			fs = document.getElementById("fragment").textContent;
-			materialExtensions = {
-				derivatives: true, // set to use derivatives
-				shaderTextureLOD: true // set to use shader texture LOD
-			};
-
-			var ourMaterial = new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: vs, fragmentShader: fs,extensions: materialExtensions });
-
-			var loader = new THREE.OBJLoader();
-			loader.load( "model/robot/body/bodyexp.obj", function ( group ) {
-				geometry = group.children[ 0 ].geometry;
-				geometry.center();
-				mesh = new THREE.Mesh( geometry, ourMaterial );
-				mesh.scale.multiplyScalar( 0.1 );
-				mesh.position.set(0,9,-1);
-				mesh.rotation.y = 45*Math.PI/180;
-				scene.add( mesh );
-			} );
-
+			//******** lights ****************************
 			var lightMesh = [];
 			var lightPos = [];
 
 			// luce 0
 			lightMesh[0] = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16), new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
-			lightMesh[0].position.set( -10, 30, -2 );
+			//lightMesh[0].position.set( -10, 30, -2 );
+			lightMesh[0].position.set( 0, 30, -2 );
 			lightPos[0] = lightMesh[0].position;
 
 			// luce 1
 			lightMesh[1] = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16), new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
-			lightMesh[1].position.set( 30, 5, -10 );
+			//lightMesh[1].position.set( 30, 5, -10 );
+			lightMesh[1].position.set( 3, 5, -10 );
 			lightPos[1] = lightMesh[1].position;
+			//******************************************
 
-			// aggiungiamo tutto agli uniform
-			uniforms.pointLightPosition.value = lightPos;
+			var uniforms = {
+					pointLightPosition:	{ type: "v3", value: lightPos },
+					clight:	{ type: "v3", value: new THREE.Vector3(1,1,1) },
+					envMap:	{ type: "t", value: textureCube},
+					normalScale: {type: "v2", value: new THREE.Vector2(1,1)}
+					};
 
+			materialExtensions = {
+				derivatives: true, // set to use derivatives
+				shaderTextureLOD: true // set to use shader texture LOD
+			};
+
+			vs = document.getElementById("vertex").textContent;
+			fs = document.getElementById("fragment").textContent;
+
+			var materials = [];
+
+			for(let i=0; i<6; i++){
+				var path = "model/robot/" + i + "/";
+				var normalMap = loadTexture( path + "norm.png" );
+				var diffuseMap = loadTexture( path + "diff.png" );
+				var specularMap = loadTexture( path + "mir.png" );
+				var roughnessMap = loadTexture( path + "norm.png" );
+				var aoMap = loadTexture( path + "ao.png" );
+
+				var uniforms = {
+						pointLightPosition:	{ type: "v3", value: lightPos },
+						clight:	{ type: "v3", value: new THREE.Vector3(1,1,1) },
+						envMap:	{ type: "t", value: textureCube},
+						normalScale: {type: "v2", value: new THREE.Vector2(1,1)},
+						roughnessMap: {type: "t", value: roughnessMap},
+						irradianceMap: { type: "t", value: irradianceMap},
+						aoMap: { type: "t", value: aoMap},
+						normalMap: { type: "t", value: normalMap},
+						diffuseMap: { type: "t", value: diffuseMap},
+						specularMap: { type: "t", value: specularMap}
+						};
+
+				materials[i] = new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: vs, fragmentShader: fs, extensions: materialExtensions });
+
+				materials[i].needsUpdate = true;
+
+			}
+
+			var loader = new THREE.OBJLoader();
 
 
 			var gui;
@@ -353,7 +359,168 @@
 			  	stats.domElement.style.top = '0px';
 			  	document.body.appendChild( stats.domElement );
 
-				ourMaterial.needsUpdate = true;
+
+				var body_pivot = new THREE.Object3D();
+				var body= new THREE.Object3D();
+				loader.load( "model/robot/0/bodyexp.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, materials[0] );
+					mesh.scale.multiplyScalar( 0.1 );
+					body.add( mesh );
+				} );
+				body_pivot.add(body);
+				body.position.set(0,9,-1);
+				body.rotation.y = 45*Math.PI/180;
+				scene.add(body_pivot);
+
+
+				guns_pivot = new THREE.Object3D();
+				var guns = new THREE.Object3D();
+				loader.load( "model/robot/1/gunsexp.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, materials[1] );
+					mesh.scale.multiplyScalar( 0.1 );
+					guns.add( mesh );
+				} );
+				guns_pivot.add(guns);
+				guns.position.set(0,0,-8.5);
+				guns.rotation.y = 45*Math.PI/180;
+				body_pivot.add(guns_pivot);
+				guns_pivot.position.set(-0.05,12.75,0);
+
+
+
+				var backright_leg = createLeg(true);
+				body_pivot.add(backright_leg);
+				backright_leg.applyMatrix(new THREE.Matrix4().makeScale(-1, 1, 1));
+				backright_leg.position.set(2.8,5.3,3.9);
+				backright_leg.rotation.y = 55*Math.PI/180;
+
+				var frontright_leg = createLeg(false);
+				body_pivot.add(frontright_leg);
+				frontright_leg.applyMatrix(new THREE.Matrix4().makeScale(-1, 1, 1));
+				frontright_leg.position.set(2.8,5.3, -3.9);
+				frontright_leg.rotation.y = 145*Math.PI/180;
+
+				var frontleft_leg = createLeg(true);
+				body_pivot.add(frontleft_leg);
+				frontleft_leg.position.set(-2.8,5.3, -3.9);
+				frontleft_leg.rotation.y = -145*Math.PI/180;
+
+
+				var backleft_leg = createLeg(false);
+				body_pivot.add(backleft_leg);
+				backleft_leg.position.set(-2.8,5.3,3.9);
+				backleft_leg.rotation.y = -55*Math.PI/180;
+
+			}
+
+			function createLeg(phase){
+				var tot_leg_pivot = new THREE.Object3D();
+
+				var leg1_pivot = new THREE.Object3D();
+				var leg1 = new THREE.Object3D();
+				loader.load( "model/robot/2/leg1_clean.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center()
+					var mesh = new THREE.Mesh( geometry, materials[2] );
+					mesh.scale.multiplyScalar( 0.1 );
+					leg1.add( mesh );
+				} );
+				leg1_pivot.add(leg1);
+				leg1.position.set(0,0.5,1.5);
+				leg1.rotation.y = 9*Math.PI/180;
+				tot_leg_pivot.add(leg1_pivot);
+
+				var leg2_pivot = new THREE.Object3D();
+				var leg2= new THREE.Object3D();
+				loader.load( "model/robot/3/leg2_clean.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, materials[3] );
+					mesh.scale.multiplyScalar( 0.1 );
+					leg2.add( mesh );
+				} );
+				leg2_pivot.add(leg2);
+				leg2.position.set(0.3,0.65,3.5);
+				leg2.rotation.y = 9*Math.PI/180;
+				leg1_pivot.add(leg2_pivot);
+				leg2_pivot.position.set(0,0.45,4);
+
+
+				var leg3_pivot = new THREE.Object3D();
+				var leg3= new THREE.Object3D();
+				loader.load( "model/robot/4/leg3_clean.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, materials[4] );
+					mesh.scale.multiplyScalar( 0.1 );
+					leg3.add( mesh );
+				} );
+				leg3_pivot.add(leg3);
+				leg3.position.set(-0.05,-3,1.5);
+				leg3.rotation.y = 9*Math.PI/180;
+				leg2_pivot.add(leg3_pivot);
+				leg3_pivot.position.set(0,1.7,7.3);
+
+				var foot_pivot = new THREE.Object3D();
+				var foot= new THREE.Object3D();
+				loader.load( "model/robot/5/leg4_clean.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, materials[5] );
+					mesh.scale.multiplyScalar( 0.1 );
+					foot.add( mesh );
+				} );
+				foot_pivot.add(foot);
+				foot.position.set(0,-0.3,0.2);
+				leg3_pivot.add(foot_pivot);
+				foot_pivot.position.set(0,-7,3.5);
+
+				/*************************************
+				************* TWEEN ******************
+				**************************************/
+				var time = 800;
+
+				var tweenLeg1Head = new TWEEN.Tween(leg1_pivot.rotation).to({ y: 20 * Math.PI / 180}, time).delay(0).easing(TWEEN.Easing.Cubic.InOut);
+				var tweenLeg1Back = new TWEEN.Tween(leg1_pivot.rotation).to({ y: 0*Math.PI/180}, time).delay(0).easing(TWEEN.Easing.Cubic.InOut);
+				tweenLeg1Head.chain(tweenLeg1Back);
+				tweenLeg1Back.chain(tweenLeg1Head);
+
+
+				var tweenLeg2Head = new TWEEN.Tween(leg2_pivot.rotation).to({ x: (-10 * Math.PI / 180)}, time/2).delay(time).easing(TWEEN.Easing.Back.InOut);
+				var tweenLeg2Back = new TWEEN.Tween(leg2_pivot.rotation).to({ x: 0* Math.PI / 180}, time/2).delay(0).easing(TWEEN.Easing.Back.InOut);
+				tweenLeg2Head.chain(tweenLeg2Back);
+				tweenLeg2Back.chain(tweenLeg2Head);
+
+				var tweenLeg3Head = new TWEEN.Tween(leg3_pivot.rotation).to({ x: (-15 * Math.PI / 180)}, time/2).delay(time).easing(TWEEN.Easing.Back.InOut);
+				var tweenLeg3Back = new TWEEN.Tween(leg3_pivot.rotation).to({ x: 0}, time/2).delay(0).easing(TWEEN.Easing.Back.InOut);
+				tweenLeg3Head.chain(tweenLeg3Back);
+				tweenLeg3Back.chain(tweenLeg3Head);
+
+				var tweenFootHead = new TWEEN.Tween(foot_pivot.rotation).to({ x: (10 * Math.PI / 180)}, time/2).delay(time).easing(TWEEN.Easing.Back.InOut);
+				var tweenFootBack = new TWEEN.Tween(foot_pivot.rotation).to({ x: 0}, time/2).delay(0).easing(TWEEN.Easing.Back.InOut);
+				tweenFootHead.chain(tweenFootBack);
+				tweenFootBack.chain(tweenFootHead);
+
+				if (phase){
+					console.log("timer");
+					setTimeout(function() {
+						tweenLeg1Head.start();
+						tweenLeg2Head.start();
+						tweenLeg3Head.start();
+						tweenFootHead.start();
+					}, time);
+				} else {
+					tweenLeg1Head.start();
+					tweenLeg2Head.start();
+					tweenLeg3Head.start();
+					tweenFootHead.start();
+				}
+
+				return tot_leg_pivot;
 
 			}
 
@@ -365,14 +532,20 @@
 
 			}
 
+			function moveGuns(){
+				guns_pivot.rotation.z += 1*Math.PI/180;
+			}
+
 			function update() {
 				requestAnimationFrame( update );
+				moveGuns();
 				stats.update();
 				render();
 			}
 
 			function render() {
 				updateUniforms();
+    			TWEEN.update();
 				renderer.render( scene, camera );
 
 			}
