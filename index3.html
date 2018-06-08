@@ -66,6 +66,8 @@
 			uniform samplerCube irradianceMap;
 			uniform samplerCube envMap;
 
+			uniform vec2 normalScale;
+
 			const float PI = 3.14159;
 
 			#define saturate(a) clamp( a, 0.0, 1.0 )
@@ -119,6 +121,7 @@
 			vec3 N =  surf_norm ;
 
 			vec3 mapN = normalize(texture2D( normalMap, uVv ).xyz * 2.0 - 1.0);
+			mapN.xy = normalScale * mapN.xy;
 			mat3 tsn = mat3( S, T, N );
 			return normalize( tsn * mapN );
 
@@ -129,7 +132,7 @@
 			return normalize( ( vec4( dir, 0.0 ) * matrix ).xyz );
 		}
 
-		vec3 BRDF_Specular_GGX_Environment( vec3 normal, vec3 viewDir, const in vec3 cspec, const in float roughness ) {
+		vec3 BRDF_Specular_GGX_Environment( vec3 normal, vec3 viewDir, vec3 cspec, float roughness ) {
 
 			float dotNV = saturate( dot( normal, viewDir ) );
 			const vec4 c0 = vec4( - 1, - 0.0275, - 0.572, 0.022 );
@@ -189,7 +192,7 @@
 
 				vec3 outRadiance = PI* clight * nDotl * BRDF
 									+ irradiance*cdiff*texture2D( aoMap, uVv ).xyz
-									+ BRDF_Specular_GGX_Environment(n, v, cspec, roughness) * envLight;
+									+ envLight * BRDF_Specular_GGX_Environment(n, v, cspec, roughness);
 				// gamma encode the final value
 				gl_FragColor = vec4(pow( outRadiance, vec3(1.0/2.2)), 1.0);
 			}
@@ -213,9 +216,6 @@
 			}
 
 			var textureParameters = {
-				material: "dino",
-				repeatS: 1.0,
-				repeatT: 1.0,
 				normalScale: 0.0,
 			}
 
@@ -223,7 +223,7 @@
 			var normalMap = loadTexture( path + "norm.png" );
 			var diffuseMap = loadTexture( path + "diff.png" );
 			var specularMap = loadTexture( path + "mir.png" );
-			//var roughnessMap = loadTexture( path + "Rough.png" );
+			var roughnessMap = loadTexture( path + "norm.png" );
 			var aoMap = loadTexture( path + "ao.png" );
 
 			// load cube map for background
@@ -251,7 +251,7 @@
 
 			var uniforms = {
 				    // cspec:	{ type: "v3", value: new THREE.Vector3(0.04,0.04,0.04) },
-				    //roughnessMap: { type: "t", value: roughnessMap},
+				    roughnessMap: { type: "t", value: roughnessMap},
 					irradianceMap: { type: "t", value: irradianceMap},
 					aoMap: { type: "t", value: aoMap},
 					normalMap:	{ type: "t", value: normalMap},
@@ -261,6 +261,7 @@
 					clight:	{ type: "v3", value: new THREE.Vector3(1,1,1) },
 					//textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) },
 					envMap:	{ type: "t", value: textureCube},
+					normalScale: {type: "v2", value: new THREE.Vector2(1,1)},
 					};
 
 			vs = document.getElementById("vertex").textContent;
@@ -294,7 +295,7 @@
 					var texture = new THREE.TextureLoader().load( file , function ( texture ) {
 						texture.minFilter = THREE.LinearMipMapLinearFilter;
 						texture.anisotropy = renderer.getMaxAnisotropy();
-						//texture.wrapS = texture.wrapT = THREE.ClampToEdgeWrapping;
+						texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 						texture.offset.set(0, 0);
 						texture.needsUpdate = true;
 						render();
@@ -368,7 +369,7 @@
 				lightSettings.add(lightParameters,'intensity').min(0).max(10000).onChange( function(newVal) { render() });
 
 				textureSettings = gui.addFolder('Texture parameters');
-				textureSettings.add(textureParameters,'normalScale').min(-3).max(3).onChange( function( newVal ) {render()});
+				textureSettings.add(textureParameters,'normalScale').min(-5).max(5).onChange( function( newVal ) {render()});
 				//textureSettings.add(textureParameters,'repeatS').min(-3).max(3).onChange( function( newVal ) {render()});
 				//textureSettings.add(textureParameters,'repeatT').min(-3).max(3).onChange( function( newVal ) {render()});
 				}
@@ -378,11 +379,11 @@
 					/*uniforms.clight.value = new THREE.Vector3(
 						lightParameters.red * lightParameters.intensity,
 					    lightParameters.green * lightParameters.intensity,
-						lightParameters.blue * lightParameters.intensity);
-					//uniforms.normalScale.value = new THREE.Vector2( textureParameters.normalScale, textureParameters.normalScale );
+						lightParameters.blue * lightParameters.intensity);*/
+					uniforms.normalScale.value = new THREE.Vector2( textureParameters.normalScale, textureParameters.normalScale );
 					//uniforms.textureRepeat.value = new THREE.Vector2( textureParameters.repeatS, textureParameters.repeatT);
-					uniforms.diffuseMap.value = diffuseMap;
-					uniforms.specularMap.value = specularMap;
+					//uniforms.diffuseMap.value = diffuseMap;
+					//uniforms.specularMap.value = specularMap;
 					// uniforms.roughnessMap.value = roughnessMap;*/
 			}
 
