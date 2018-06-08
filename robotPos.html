@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Robot</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			a {
+				color: #000;
+				text-decoration: none;
+			}
+
+			a:hover {
+				color: #0080ff;
+			}
+		</style>
+	</head>
+	<body>
+
+		<script src="lib/three.min.js"></script>
+		<script src="lib/stats.min.js"></script>
+		<script src="lib/OrbitControls.js"></script>
+		<script src='lib/dat.gui.min.js'></script>
+		<script src='lib/OBJLoader.js'></script>
+		<script src='lib/OBJLoader.js'></script>
+		<script type='text/javascript' src='tweenjs/Tween.js'></script>
+
+		<!-- shaders -->
+
+		<script type="text/x-glsl" id="vertex">
+		varying vec3 vNormal;
+		varying vec3 vPosition;
+		varying vec2 uVv;
+
+
+		void main() {
+			vec4 vPos = modelViewMatrix * vec4( position, 1.0 );
+			vPosition = vPos.xyz;
+			vNormal = normalMatrix * normal;
+			uVv = uv;
+			gl_Position = projectionMatrix * vPos;
+		}
+		</script>
+
+		<script type="text/x-glsl" id="fragment">
+			varying vec3 vNormal;
+			varying vec3 vPosition;
+			uniform vec3 pointLightPosition[3]; // in world space
+			uniform vec3 clight;
+			uniform vec3 cspec;
+			uniform vec3 cdiff;
+			uniform float roughness;
+			const float PI = 3.14159;
+
+			vec4 lPos[2];
+
+			vec3 FSchlick(float lDoth) {
+				return (cspec + (vec3(1.0)-cspec)*pow(1.0 - lDoth,5.0));
+			}
+
+			float DGGX(float nDoth, float alpha) {
+				float alpha2 = alpha*alpha;
+				float d = nDoth*nDoth*(alpha2-1.0)+1.0;
+				return (  alpha2 / (PI*d*d));
+			}
+
+			float G1(float dotProduct, float k) {
+				return (dotProduct / (dotProduct*(1.0-k) + k) );
+			}
+
+			float GSmith(float nDotv, float nDotl) {
+					float k = roughness*roughness;
+					return G1(nDotl,k)*G1(nDotv,k);
+			}
+
+			void main() {
+				vec3 n = normalize( vNormal );  // interpolation destroys normalization, so we have to normalize
+				vec3 v = normalize( -vPosition);
+
+				float nDotv = max(dot( n, v ),0.000001);
+
+				vec3 outRadiance;
+				for (int i=0; i<3; i++){
+
+					vec4 lPosition = viewMatrix * vec4( pointLightPosition[i], 1.0 );
+					vec3 l = normalize(lPosition.xyz - vPosition.xyz);
+					vec3 h = normalize( v + l);
+
+					// small quantity to prevent divisions by 0
+					float nDotl = max(dot( n, l ),0.000001);
+					float lDoth = max(dot( l, h ),0.000001);
+					float nDoth = max(dot( n, h ),0.000001);
+					float vDoth = max(dot( v, h ),0.000001);
+
+					vec3 fresnel = FSchlick(lDoth);
+					vec3 BRDF = (vec3(1.0)-fresnel)*cdiff/PI + fresnel*GSmith(nDotv,nDotl)*DGGX(nDoth,roughness*roughness)/
+						(4.0*nDotl*nDotv);
+					outRadiance += PI* clight * nDotl * BRDF;
+
+				}
+
+				// gamma encode the final value
+				gl_FragColor = vec4(pow( outRadiance, vec3(1.0/2.2)), 1.0);
+			}
+		</script>
+
+		<!-- three.js code -->
+
+		<script>
+
+			var renderer = new THREE.WebGLRenderer( { antialias: true } );
+			var camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 1000 );
+			var controls = new THREE.OrbitControls( camera, renderer.domElement );
+			var scene = new THREE.Scene();
+
+			controls = new THREE.OrbitControls( camera );
+			controls.addEventListener( 'change', render );
+
+			// default: white, 1.0 intensity
+			var lightParameters = {
+				red: 1.0,
+				green: 1.0,
+				blue: 1.0,
+				intensity: 1.0,
+			}
+
+			var textureParameters = {
+				material: "body",
+				repeatS: 1.0,
+				repeatT: 1.0,
+				normalScale: 1.0,
+			}
+
+			var uniforms = {
+					cspec:	{ type: "v3", value: new THREE.Vector3(1, 1, 0) },
+					cdiff:	{ type: "v3", value: new THREE.Vector3(1, 1, 0) },
+					roughness: {type: "f", value: 0.5},
+					normalScale: {type: "v2", value: new THREE.Vector2(1,1)},
+					pointLightPosition:	{ type: "v3", value: new THREE.Vector3() },
+					clight:	{ type: "v3", value: new THREE.Vector3(1,1,1) },
+					textureRepeat: { type: "v2", value: new THREE.Vector2(1,1) }
+					};
+
+			vs = document.getElementById("vertex").textContent;
+			fs = document.getElementById("fragment").textContent;
+
+			var ourMaterial = new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: vs, fragmentShader: fs });
+
+			var loader = new THREE.OBJLoader();
+
+			var lightMesh = [];
+			var lightPos = [];
+
+			// luce 0
+			lightMesh[0] = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16), new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
+			lightMesh[0].position.set( 3, -5, -25 );
+			lightPos[0] = lightMesh[0].position;
+
+			// luce 1
+			lightMesh[1] = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16), new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
+			lightMesh[1].position.set( -20, 30, 10 );
+			lightPos[1] = lightMesh[1].position;
+
+			lightMesh[2] = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16), new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
+			lightMesh[2].position.set( 30, 30, 1 );
+			lightPos[2] = lightMesh[2].position;
+
+			// aggiungiamo tutto agli uniform
+			uniforms.pointLightPosition.value = lightPos;
+
+
+			var axesHelper = new THREE.AxesHelper( 20 );
+			scene.add( axesHelper );
+
+			var stats = new Stats();
+
+
+			function init() {
+
+				renderer.setClearColor( 0xf0f0f0 );
+
+				camera.position.set( 25, 20, -50 );
+				scene.add( camera );
+				scene.add(lightMesh[0]);
+				scene.add(lightMesh[1]);
+				scene.add(lightMesh[2]);
+
+				document.body.appendChild( renderer.domElement );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				//controls.addEventListener( 'change', render );
+				controls.minDistance = 1;
+				controls.maxDistance = 100;
+				controls.enablePan = false;
+				controls.update();
+
+				window.addEventListener( 'resize', onResize, false );
+
+			  	stats.domElement.style.position = 'absolute';
+			  	stats.domElement.style.top = '0px';
+			  	document.body.appendChild( stats.domElement );
+
+				ourMaterial.needsUpdate = true;
+
+
+				var body_pivot = new THREE.Object3D();
+				var body= new THREE.Object3D();
+				loader.load( "model/robot/body/bodyexp.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, ourMaterial );
+					mesh.scale.multiplyScalar( 0.1 );
+					body.add( mesh );
+				} );
+				body_pivot.add(body);
+				body.position.set(0,9,-1);
+				body.rotation.y = 45*Math.PI/180;
+				scene.add(body_pivot);
+				// body_pivot.rotation.y = 36*Math.PI/180;
+
+
+				guns_pivot = new THREE.Object3D();
+				var guns = new THREE.Object3D();
+				loader.load( "model/robot/guns/gunsexp.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, ourMaterial );
+					mesh.scale.multiplyScalar( 0.1 );
+					guns.add( mesh );
+				} );
+				guns_pivot.add(guns);
+				guns.position.set(0,0,-8.5);
+				guns.rotation.y = 45*Math.PI/180;
+				body_pivot.add(guns_pivot);
+				guns_pivot.position.set(-0.05,12.75,0);
+
+
+
+				var backright_leg = createLeg(true, false);
+				body_pivot.add(backright_leg);
+				backright_leg.applyMatrix(new THREE.Matrix4().makeScale(-1, 1, 1));
+				backright_leg.position.set(2.8,5.3,3.9);
+				backright_leg.rotation.y = 35*Math.PI/180;
+
+				var frontright_leg = createLeg(false, true);
+				body_pivot.add(frontright_leg);
+				frontright_leg.applyMatrix(new THREE.Matrix4().makeScale(-1, 1, 1));
+				frontright_leg.position.set(2.8,5.3, -3.9);
+				frontright_leg.rotation.y = 145*Math.PI/180;
+
+				var frontleft_leg = createLeg(true, true);
+				body_pivot.add(frontleft_leg);
+				frontleft_leg.position.set(-2.8,5.3, -3.9);
+				frontleft_leg.rotation.y = -145*Math.PI/180;
+
+
+				var backleft_leg = createLeg(false, false);
+				body_pivot.add(backleft_leg);
+				backleft_leg.position.set(-2.8,5.3,3.9);
+				backleft_leg.rotation.y = -35*Math.PI/180;
+
+			}
+
+			function createLeg(phase, isFront){
+				var tot_leg_pivot = new THREE.Object3D();
+
+				var leg1_pivot = new THREE.Object3D();
+				var leg1 = new THREE.Object3D();
+				loader.load( "model/robot/leg1/leg1_clean.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center()
+					var mesh = new THREE.Mesh( geometry, ourMaterial );
+					mesh.scale.multiplyScalar( 0.1 );
+					leg1.add( mesh );
+				} );
+				leg1_pivot.add(leg1);
+				leg1.position.set(0,0.5,1.5);
+				leg1.rotation.y = 9*Math.PI/180;
+				tot_leg_pivot.add(leg1_pivot);
+
+				var leg2_pivot = new THREE.Object3D();
+				var leg2= new THREE.Object3D();
+				loader.load( "model/robot/leg2/leg2_clean.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, ourMaterial );
+					mesh.scale.multiplyScalar( 0.1 );
+					leg2.add( mesh );
+				} );
+				leg2_pivot.add(leg2);
+				leg2.position.set(0.3,0.65,3.5);
+				leg2.rotation.y = 9*Math.PI/180;
+				leg1_pivot.add(leg2_pivot);
+				leg2_pivot.position.set(0,0.45,4);
+
+
+				var leg3_pivot = new THREE.Object3D();
+				var leg3= new THREE.Object3D();
+				loader.load( "model/robot/leg3/leg3_clean.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, ourMaterial );
+					mesh.scale.multiplyScalar( 0.1 );
+					leg3.add( mesh );
+				} );
+				leg3_pivot.add(leg3);
+				leg3.position.set(-0.05,-3,1.5);
+				leg3.rotation.y = 9*Math.PI/180;
+				leg2_pivot.add(leg3_pivot);
+				leg3_pivot.position.set(0,1.7,7.3);
+
+				var foot_pivot = new THREE.Object3D();
+				var foot= new THREE.Object3D();
+				loader.load( "model/robot/leg4/leg4_clean.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, ourMaterial );
+					mesh.scale.multiplyScalar( 0.1 );
+					foot.add( mesh );
+				} );
+				foot_pivot.add(foot);
+				foot.position.set(0,-0.3,0.2);
+				leg3_pivot.add(foot_pivot);
+				foot_pivot.position.set(0,-7,3.5);
+
+				/*************************************
+				************* TWEEN ******************
+				**************************************/
+				var deltaY_Leg1 = -20;
+				if (isFront){
+					deltaY_Leg1 = 20;
+				}
+
+				var time = 800;
+
+				var tweenLeg1Head = new TWEEN.Tween(leg1_pivot.rotation).to({ y: deltaY_Leg1 * Math.PI / 180}, time).delay(0).easing(TWEEN.Easing.Cubic.InOut);
+				var tweenLeg1Back = new TWEEN.Tween(leg1_pivot.rotation).to({ y: 0*Math.PI/180}, time).delay(0).easing(TWEEN.Easing.Cubic.InOut);
+				tweenLeg1Head.chain(tweenLeg1Back);
+				tweenLeg1Back.chain(tweenLeg1Head);
+
+
+				var tweenLeg2Head = new TWEEN.Tween(leg2_pivot.rotation).to({ x: (-10 * Math.PI / 180)}, time/2).delay(time).easing(TWEEN.Easing.Cubic.Out);
+				var tweenLeg2Back = new TWEEN.Tween(leg2_pivot.rotation).to({ x: 0* Math.PI / 180}, time/2).delay(0).easing(TWEEN.Easing.Cubic.Out);
+				tweenLeg2Head.chain(tweenLeg2Back);
+				tweenLeg2Back.chain(tweenLeg2Head);
+
+				var tweenLeg3Head = new TWEEN.Tween(leg3_pivot.rotation).to({ x: (-15 * Math.PI / 180)}, time/2).delay(time).easing(TWEEN.Easing.Cubic.Out);
+				var tweenLeg3Back = new TWEEN.Tween(leg3_pivot.rotation).to({ x: 0}, time/2).delay(0).easing(TWEEN.Easing.Cubic.Out);
+				tweenLeg3Head.chain(tweenLeg3Back);
+				tweenLeg3Back.chain(tweenLeg3Head);
+
+				var tweenFootHead = new TWEEN.Tween(foot_pivot.rotation).to({ x: (10 * Math.PI / 180)}, time/2).delay(time).easing(TWEEN.Easing.Cubic.Out);
+				var tweenFootBack = new TWEEN.Tween(foot_pivot.rotation).to({ x: 0}, time/2).delay(0).easing(TWEEN.Easing.Cubic.Out);
+				tweenFootHead.chain(tweenFootBack);
+				tweenFootBack.chain(tweenFootHead);
+
+				if (phase){
+					console.log("timer");
+					setTimeout(function() {
+						tweenLeg1Head.start();
+						tweenLeg2Head.start();
+						tweenLeg3Head.start();
+						tweenFootHead.start();
+					}, time);
+				} else {
+					tweenLeg1Head.start();
+					tweenLeg2Head.start();
+					tweenLeg3Head.start();
+					tweenFootHead.start();
+				}
+
+				return tot_leg_pivot;
+
+			}
+
+			function onResize() {
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				camera.aspect = ( window.innerWidth / window.innerHeight );
+				camera.updateProjectionMatrix();
+			}
+
+			function moveGuns(){
+				guns_pivot.rotation.z += 1*Math.PI/180;
+			}
+
+
+			function update() {
+				requestAnimationFrame( update );
+				moveGuns();
+				stats.update();
+				render();
+			}
+
+			function render() {
+				updateUniforms();
+    			TWEEN.update();
+				renderer.render( scene, camera );
+			}
+
+			function updateUniforms() {
+					/*uniforms.clight.value = new THREE.Vector3(
+						lightParameters.red * lightParameters.intensity,
+					    lightParameters.green * lightParameters.intensity,
+						lightParameters.blue * lightParameters.intensity);
+					uniforms.normalScale.value = new THREE.Vector2( textureParameters.normalScale, textureParameters.normalScale );
+			*/}
+
+
+
+
+			init();
+			update();
+			render();
+
+		</script>
+	</body>
+</html>
