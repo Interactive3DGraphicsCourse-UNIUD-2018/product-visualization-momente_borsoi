@@ -51,12 +51,14 @@
 		<script type="text/x-glsl" id="fragment">
 			varying vec3 vNormal;
 			varying vec3 vPosition;
-			uniform vec3 pointLightPosition; // in world space
+			uniform vec3 pointLightPosition[2]; // in world space
 			uniform vec3 clight;
 			uniform vec3 cspec;
 			uniform vec3 cdiff;
 			uniform float roughness;
 			const float PI = 3.14159;
+
+			vec4 lPos[2];
 
 			vec3 FSchlick(float lDoth) {
 				return (cspec + (vec3(1.0)-cspec)*pow(1.0 - lDoth,5.0));
@@ -78,8 +80,15 @@
 			}
 
 			void main() {
-				vec4 lPosition = viewMatrix * vec4( pointLightPosition, 1.0 );
-				vec3 l = normalize(lPosition.xyz - vPosition.xyz);
+				vec3 lsum;
+				vec4 lPosition[2];
+				vec3 lPosition3[2];
+				for (int i=0; i<2; i++){
+					lPosition[i]= viewMatrix * vec4( pointLightPosition[i], 1.0 );
+					lPosition3[i] = normalize(lPosition[i].xyz - vPosition.xyz);
+					lsum+=lPosition3[i];
+				}
+				vec3 l = lsum;
 				vec3 n = normalize( vNormal );  // interpolation destroys normalization, so we have to normalize
 				vec3 v = normalize( -vPosition);
 				vec3 h = normalize( v + l);
@@ -126,8 +135,8 @@
 			}
 
 			var uniforms = {
-					cspec:	{ type: "v3", value: new THREE.Vector3(2, 2, 0) },
-					cdiff:	{ type: "v3", value: new THREE.Vector3(2, 2, 0) },
+					cspec:	{ type: "v3", value: new THREE.Vector3(1, 1, 0) },
+					cdiff:	{ type: "v3", value: new THREE.Vector3(1, 1, 0) },
 					roughness: {type: "f", value: 0.5},
 					normalScale: {type: "v2", value: new THREE.Vector2(1,1)},
 					pointLightPosition:	{ type: "v3", value: new THREE.Vector3() },
@@ -142,11 +151,21 @@
 
 			var loader = new THREE.OBJLoader();
 
-			var lightMesh = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16),
-				new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
-			lightMesh.position.set( 7.0, 7.0, 7.0 );
-			uniforms.pointLightPosition.value = new THREE.Vector3(lightMesh.position.x,	lightMesh.position.y, lightMesh.position.z);
+			var lightMesh = [];
+			var lightPos = [];
 
+			// luce 0
+			lightMesh[0] = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16), new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
+			lightMesh[0].position.set( 3, 5, -20 );
+			lightPos[0] = new THREE.Vector3(lightMesh[0].position.x,lightMesh[0].position.y,lightMesh[0].position.z);
+
+			// luce 1
+			lightMesh[1] = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16), new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
+			lightMesh[1].position.set( 0, 30, 10 );
+			lightPos[1] = new THREE.Vector3(lightMesh[1].position.x,lightMesh[1].position.y,lightMesh[1].position.z);
+
+			// aggiungiamo tutto agli uniform
+			uniforms.pointLightPosition.value = lightPos;
 
 
 			var axesHelper = new THREE.AxesHelper( 20 );
@@ -159,9 +178,10 @@
 
 				renderer.setClearColor( 0xf0f0f0 );
 
-				camera.position.set( 0, 0, 10 );
+				camera.position.set( 92, 36, 8 );
 				scene.add( camera );
-				scene.add(lightMesh);
+				scene.add(lightMesh[0]);
+				scene.add(lightMesh[1]);
 
 				document.body.appendChild( renderer.domElement );
 				renderer.setPixelRatio( window.devicePixelRatio );
@@ -181,47 +201,66 @@
 
 				ourMaterial.needsUpdate = true;
 
+
 				var body_pivot = new THREE.Object3D();
-				var body = new THREE.Object3D();
+				var body= new THREE.Object3D();
 				loader.load( "model/robot/body/bodyexp.obj", function ( group ) {
 					geometry = group.children[ 0 ].geometry;
 					geometry.center();
-					body = new THREE.Mesh( geometry, ourMaterial );
-					body.position.set(0,9.5,0);
-					body.rotation.y = 18*Math.PI/180;
-					body.scale.multiplyScalar( 0.1 );
-					scene.add( body );
+					var mesh = new THREE.Mesh( geometry, ourMaterial );
+					mesh.scale.multiplyScalar( 0.1 );
+					body.add( mesh );
 				} );
 				body_pivot.add(body);
-				body_pivot.position.set(0,0,-1);
-				scene.add(body_pivot);
+				body.position.set(0,9,-1);
+				body.rotation.y = 45*Math.PI/180;
+				scene.add(body_pivot); 
+				// body_pivot.rotation.y = 36*Math.PI/180;
 
-				var backright_leg = createLeg(true);
+
+				guns_pivot = new THREE.Object3D();
+				var guns = new THREE.Object3D();
+				loader.load( "model/robot/guns/gunsexp.obj", function ( group ) {
+					geometry = group.children[ 0 ].geometry;
+					geometry.center();
+					var mesh = new THREE.Mesh( geometry, ourMaterial );
+					mesh.scale.multiplyScalar( 0.1 );
+					guns.add( mesh );
+				} );
+				guns_pivot.add(guns);
+				guns.position.set(0,0,-8.5);
+				guns.rotation.y = 45*Math.PI/180;
+				body_pivot.add(guns_pivot);
+				guns_pivot.position.set(-0.05,12.75,0);
+
+
+
+				var backright_leg = createLeg(true, false);
 				body_pivot.add(backright_leg);
 				backright_leg.applyMatrix(new THREE.Matrix4().makeScale(-1, 1, 1));
-				backright_leg.position.set(0,5.3,6.1);
-				backright_leg.rotation.y = 25*Math.PI/180;
+				backright_leg.position.set(2.8,5.3,3.9);
+				backright_leg.rotation.y = 35*Math.PI/180;
 
-				var frontright_leg = createLeg(false);
+				var frontright_leg = createLeg(false, true);
 				body_pivot.add(frontright_leg);
 				frontright_leg.applyMatrix(new THREE.Matrix4().makeScale(-1, 1, 1));
-				frontright_leg.position.set(3.5,5.3,-0.7);
-				frontright_leg.rotation.y = 130*Math.PI/180;
+				frontright_leg.position.set(2.8,5.3, -3.9);
+				frontright_leg.rotation.y = 145*Math.PI/180;
 
-				var frontleft_leg = createLeg(true);
+				var frontleft_leg = createLeg(true, true);
 				body_pivot.add(frontleft_leg);
-				frontleft_leg.position.set(-1.5,5.3, -3.3);
-				frontleft_leg.rotation.y = 180*Math.PI/180;
+				frontleft_leg.position.set(-2.8,5.3, -3.9);
+				frontleft_leg.rotation.y = -145*Math.PI/180;
 
 
-				var backleft_leg = createLeg(false);
+				var backleft_leg = createLeg(false, false);
 				body_pivot.add(backleft_leg);
-				backleft_leg.position.set(-5,5.3,3.8);
-				backleft_leg.rotation.y = -75*Math.PI/180;
+				backleft_leg.position.set(-2.8,5.3,3.9);
+				backleft_leg.rotation.y = -35*Math.PI/180;
 
 			}
 
-			function createLeg(phase){
+			function createLeg(phase, isFront){
 				var tot_leg_pivot = new THREE.Object3D();
 
 				var leg1_pivot = new THREE.Object3D();
@@ -268,7 +307,6 @@
 				leg3.rotation.y = 9*Math.PI/180;
 				leg2_pivot.add(leg3_pivot);
 				leg3_pivot.position.set(0,1.7,7.3);
-				// leg3_pivot.rotation.x = -30 *Math.PI/180; // TODO
 
 				var foot_pivot = new THREE.Object3D();
 				var foot= new THREE.Object3D();
@@ -283,29 +321,35 @@
 				foot.position.set(0,-0.3,0.2);
 				leg3_pivot.add(foot_pivot);
 				foot_pivot.position.set(0,-7,3.5);
-				// foot_pivot.rotation.y = 180 *Math.PI/180;
 
 				/*************************************
 				************* TWEEN ******************
 				**************************************/
-				var tweenLeg1Head = new TWEEN.Tween(leg1_pivot.rotation).to({ y: 30 * Math.PI / 180}, 2000).delay(0).easing(TWEEN.Easing.Cubic.InOut);
-				var tweenLeg1Back = new TWEEN.Tween(leg1_pivot.rotation).to({ y: 0*Math.PI/180}, 2000).delay(0).easing(TWEEN.Easing.Cubic.InOut);
+				var deltaY_Leg1 = -20;
+				if (isFront){
+					deltaY_Leg1 = 20;
+				}
+
+				var time = 800; 
+
+				var tweenLeg1Head = new TWEEN.Tween(leg1_pivot.rotation).to({ y: deltaY_Leg1 * Math.PI / 180}, time).delay(0).easing(TWEEN.Easing.Cubic.InOut);
+				var tweenLeg1Back = new TWEEN.Tween(leg1_pivot.rotation).to({ y: 0*Math.PI/180}, time).delay(0).easing(TWEEN.Easing.Cubic.InOut);
 				tweenLeg1Head.chain(tweenLeg1Back);
 				tweenLeg1Back.chain(tweenLeg1Head);
 
 
-				var tweenLeg2Head = new TWEEN.Tween(leg2_pivot.rotation).to({ x: (-20 * Math.PI / 180)}, 1000).delay(2000).easing(TWEEN.Easing.Cubic.Out);
-				var tweenLeg2Back = new TWEEN.Tween(leg2_pivot.rotation).to({ x: 0* Math.PI / 180}, 1000).delay(0).easing(TWEEN.Easing.Cubic.Out);
+				var tweenLeg2Head = new TWEEN.Tween(leg2_pivot.rotation).to({ x: (-10 * Math.PI / 180)}, time/2).delay(time).easing(TWEEN.Easing.Cubic.Out);
+				var tweenLeg2Back = new TWEEN.Tween(leg2_pivot.rotation).to({ x: 0* Math.PI / 180}, time/2).delay(0).easing(TWEEN.Easing.Cubic.Out);
 				tweenLeg2Head.chain(tweenLeg2Back);
 				tweenLeg2Back.chain(tweenLeg2Head);
 
-				var tweenLeg3Head = new TWEEN.Tween(leg3_pivot.rotation).to({ x: (-30 * Math.PI / 180)}, 1000).delay(2000).easing(TWEEN.Easing.Cubic.Out);
-				var tweenLeg3Back = new TWEEN.Tween(leg3_pivot.rotation).to({ x: 0}, 1000).delay(0).easing(TWEEN.Easing.Cubic.Out);
+				var tweenLeg3Head = new TWEEN.Tween(leg3_pivot.rotation).to({ x: (-15 * Math.PI / 180)}, time/2).delay(time).easing(TWEEN.Easing.Cubic.Out);
+				var tweenLeg3Back = new TWEEN.Tween(leg3_pivot.rotation).to({ x: 0}, time/2).delay(0).easing(TWEEN.Easing.Cubic.Out);
 				tweenLeg3Head.chain(tweenLeg3Back);
 				tweenLeg3Back.chain(tweenLeg3Head);
 
-				var tweenFootHead = new TWEEN.Tween(foot_pivot.rotation).to({ x: (10 * Math.PI / 180)}, 1000).delay(2000).easing(TWEEN.Easing.Cubic.Out);
-				var tweenFootBack = new TWEEN.Tween(foot_pivot.rotation).to({ x: 0}, 1000).delay(0).easing(TWEEN.Easing.Cubic.Out);
+				var tweenFootHead = new TWEEN.Tween(foot_pivot.rotation).to({ x: (10 * Math.PI / 180)}, time/2).delay(time).easing(TWEEN.Easing.Cubic.Out);
+				var tweenFootBack = new TWEEN.Tween(foot_pivot.rotation).to({ x: 0}, time/2).delay(0).easing(TWEEN.Easing.Cubic.Out);
 				tweenFootHead.chain(tweenFootBack);
 				tweenFootBack.chain(tweenFootHead);
 
@@ -316,7 +360,7 @@
 						tweenLeg2Head.start();
 						tweenLeg3Head.start();
 						tweenFootHead.start();
-					}, 2000);
+					}, time);
 				} else {
 					tweenLeg1Head.start();
 					tweenLeg2Head.start();
@@ -334,8 +378,14 @@
 				camera.updateProjectionMatrix();
 			}
 
+			function moveGuns(){
+				guns_pivot.rotation.z += 1*Math.PI/180;
+			}
+
+
 			function update() {
 				requestAnimationFrame( update );
+				moveGuns();
 				stats.update();
 				render();
 			}
