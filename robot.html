@@ -207,7 +207,7 @@
 
 				var body_pivot = new THREE.Object3D();
 				var body= new THREE.Object3D();
-				loader.load( "model/robot/body/bodyexp.obj", function ( group ) {
+				loader.load( "model/robot/0/bodyexp.obj", function ( group ) {
 					geometry = group.children[ 0 ].geometry;
 					geometry.center();
 					var mesh = new THREE.Mesh( geometry, ourMaterial );
@@ -223,7 +223,7 @@
 
 				guns_pivot = new THREE.Object3D();
 				var guns = new THREE.Object3D();
-				loader.load( "model/robot/guns/gunsexp.obj", function ( group ) {
+				loader.load( "model/robot/1/gunsexp.obj", function ( group ) {
 					geometry = group.children[ 0 ].geometry;
 					geometry.center();
 					var mesh = new THREE.Mesh( geometry, ourMaterial );
@@ -268,7 +268,7 @@
 
 				var leg1_pivot = new THREE.Object3D();
 				var leg1 = new THREE.Object3D();
-				loader.load( "model/robot/leg1/leg1_clean.obj", function ( group ) {
+				loader.load( "model/robot/2/leg1_clean.obj", function ( group ) {
 					geometry = group.children[ 0 ].geometry;
 					geometry.center()
 					var mesh = new THREE.Mesh( geometry, ourMaterial );
@@ -282,7 +282,7 @@
 
 				var leg2_pivot = new THREE.Object3D();
 				var leg2= new THREE.Object3D();
-				loader.load( "model/robot/leg2/leg2_clean.obj", function ( group ) {
+				loader.load( "model/robot/3/leg2_clean.obj", function ( group ) {
 					geometry = group.children[ 0 ].geometry;
 					geometry.center();
 					var mesh = new THREE.Mesh( geometry, ourMaterial );
@@ -298,7 +298,7 @@
 
 				var leg3_pivot = new THREE.Object3D();
 				var leg3= new THREE.Object3D();
-				loader.load( "model/robot/leg3/leg3_clean.obj", function ( group ) {
+				loader.load( "model/robot/4/leg3_clean.obj", function ( group ) {
 					geometry = group.children[ 0 ].geometry;
 					geometry.center();
 					var mesh = new THREE.Mesh( geometry, ourMaterial );
@@ -313,7 +313,7 @@
 
 				var foot_pivot = new THREE.Object3D();
 				var foot= new THREE.Object3D();
-				loader.load( "model/robot/leg4/leg4_clean.obj", function ( group ) {
+				loader.load( "model/robot/5/leg4_clean.obj", function ( group ) {
 					geometry = group.children[ 0 ].geometry;
 					geometry.center();
 					var mesh = new THREE.Mesh( geometry, ourMaterial );
@@ -352,7 +352,6 @@
 				tweenFootBack.chain(tweenFootHead);
 
 				if (phase){
-					console.log("timer");
 					setTimeout(function() {
 						tweenLeg1Head.start();
 						tweenLeg2Head.start();

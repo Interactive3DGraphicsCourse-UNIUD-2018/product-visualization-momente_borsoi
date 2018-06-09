@@ -163,11 +163,12 @@
 				// texture in sRGB, linearize
 				cdiff = pow( cdiff, vec3(2.2));
 
-				cspec = texture2D( specularMap, uVv ).rgb;
+				cspec = texture2D( specularMap, uVv ).rgb-vec3(0.3);
 				// texture in sRGB, linearize
 				cspec = pow( cspec, vec3(2.2));
 
-				roughness = texture2D( roughnessMap, uVv ).r; // no need to linearize roughness map
+				roughness = 1.0 - texture2D( specularMap, uVv ).r; // no need to linearize roughness map
+				roughness = pow( roughness, 2.2);
 
 
 				float blinnShininessExponent = GGXRoughnessToBlinnExponent(roughness);
@@ -226,7 +227,7 @@
 			}
 
 			var textureParameters = {
-				normalScale: 0.0,
+				normalScale: 1.0,
 			}
 
 			// load cube map for background
@@ -241,7 +242,7 @@
 
 			var loaderE = new THREE.CubeTextureLoader();
 			//loaderE.setPath( 'images/Helipad_GoldenHour/reflection/' );
-			loaderE.setPath( 'images/industrial_hall/reflection/' );
+			loaderE.setPath( 'images/industrial_hall/reflection/1024/' );
 
 			var textureCube = loaderE.load( [
 				'px.png', 'nx.png',
@@ -249,7 +250,15 @@
 				'pz.png', 'nz.png'
 			] );
 
-			scene.background = textureCube;
+			loaderE.setPath( 'images/industrial_hall/reflection/256/' );
+
+			var visualCube = loaderE.load( [
+				'px.png', 'nx.png',
+				'py.png', 'ny.png',
+				'pz.png', 'nz.png'
+			] );
+
+			scene.background = visualCube;
 
 			textureCube.minFilter = THREE.LinearMipMapLinearFilter;
 
@@ -260,22 +269,15 @@
 			// luce 0
 			lightMesh[0] = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16), new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
 			//lightMesh[0].position.set( -10, 30, -2 );
-			lightMesh[0].position.set( 0, 30, -2 );
+			lightMesh[0].position.set( 0, 300, -2 );
 			lightPos[0] = lightMesh[0].position;
 
 			// luce 1
 			lightMesh[1] = new THREE.Mesh( new THREE.SphereGeometry( 1, 16, 16), new THREE.MeshBasicMaterial ({color: 0xffff00, wireframe:true}));
 			//lightMesh[1].position.set( 30, 5, -10 );
-			lightMesh[1].position.set( 3, 5, -10 );
+			lightMesh[1].position.set( 10, 10, 0 );
 			lightPos[1] = lightMesh[1].position;
 			//******************************************
-
-			var uniforms = {
-					pointLightPosition:	{ type: "v3", value: lightPos },
-					clight:	{ type: "v3", value: new THREE.Vector3(1,1,1) },
-					envMap:	{ type: "t", value: textureCube},
-					normalScale: {type: "v2", value: new THREE.Vector2(1,1)}
-					};
 
 			materialExtensions = {
 				derivatives: true, // set to use derivatives
@@ -288,7 +290,7 @@
 			var materials = [];
 
 			for(let i=0; i<6; i++){
-				var path = "model/robot/" + i + "/";
+				var path = "model/robot/" + i + "/rust/";
 				var normalMap = loadTexture( path + "norm.png" );
 				var diffuseMap = loadTexture( path + "diff.png" );
 				var specularMap = loadTexture( path + "mir.png" );
@@ -297,7 +299,7 @@
 
 				var uniforms = {
 						pointLightPosition:	{ type: "v3", value: lightPos },
-						clight:	{ type: "v3", value: new THREE.Vector3(1,1,1) },
+						clight:	{ type: "v3", value: new THREE.Vector3(0.3,0.3,0.3) },
 						envMap:	{ type: "t", value: textureCube},
 						normalScale: {type: "v2", value: new THREE.Vector2(1,1)},
 						roughnessMap: {type: "t", value: roughnessMap},
