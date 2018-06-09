@@ -167,9 +167,7 @@
 				// texture in sRGB, linearize
 				cspec = pow( cspec, vec3(2.2));
 
-				roughness = 1.0 - texture2D( specularMap, uVv ).r; // no need to linearize roughness map
-				roughness = pow( roughness, 2.2);
-
+				roughness = texture2D( roughnessMap, uVv ).r; // no need to linearize roughness map
 
 				float blinnShininessExponent = GGXRoughnessToBlinnExponent(roughness);
 				float specularMIPLevel = getSpecularMIPLevel(blinnShininessExponent ,8 );
@@ -294,7 +292,7 @@
 				var normalMap = loadTexture( path + "norm.png" );
 				var diffuseMap = loadTexture( path + "diff.png" );
 				var specularMap = loadTexture( path + "mir.png" );
-				var roughnessMap = loadTexture( path + "norm.png" );
+				var roughnessMap = loadTexture( path + "rough.png" );
 				var aoMap = loadTexture( path + "ao.png" );
 
 				var uniforms = {
@@ -372,7 +370,7 @@
 					body.add( mesh );
 				} );
 				body_pivot.add(body);
-				body.position.set(0,9,-1);
+				body.position.set(0,9.4,-1);
 				body.rotation.y = 45*Math.PI/180;
 				scene.add(body_pivot);
 
@@ -390,7 +388,7 @@
 				guns.position.set(0,0,-8.5);
 				guns.rotation.y = 45*Math.PI/180;
 				body_pivot.add(guns_pivot);
-				guns_pivot.position.set(-0.05,12.75,0);
+				guns_pivot.position.set(-0.05,13.15,0);
 
 
 
