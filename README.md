@@ -6,7 +6,6 @@ Il nostro progetto prevede il rendering di un robot da guerra. L'utente ha la po
 
 # Struttura del progetto
 - da ```index.html``` si accede al risultato finale del progetto
-- ```robot.html``` contiene il rendering del robot senza la cornice del sito web
 - ```journal.md``` una raccolta di tutti gli step fatti per la realizzazione del progetto
 - ```./images``` contiene le immagini inserite in questo file, nel journal, le EM e le IEM
 - ```./lib``` contiene le librerie di threejs e tweenjs

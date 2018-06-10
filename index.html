@@ -55,7 +55,7 @@
             .overlay-content {
                 position: relative;
                 left: 0;
-                top: 7%;
+                top: 3%;
                 width: 100%;
                 text-align: center;
             }
@@ -69,6 +69,22 @@
                 transition: 0.3s;
             }
 
+            .overlayTitle {
+
+                padding-top: 18px !important;
+                padding-left: 15px !important;
+                font-size: 30px !important;
+
+                pointer-events: none;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+
+            }
+
             .overlay a:hover, .overlay a:focus {
                 color: #f1f1f1;
             }
@@ -78,6 +94,8 @@
                 top: 0px;
                 right: 10px;
                 font-size: 60px;
+                height: 68px;
+                padding-top: 0px;
             }
 
             @media screen and (max-height: 450px) {
@@ -92,7 +110,7 @@
             .btn {
                 position: relative;
 
-                width: 180px;
+                width: 200px;
                 height: 50px;
 
                 display: block;
@@ -106,14 +124,14 @@
                 border-radius: 2px;
                 box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
 
-                background-color: #414141;
-                color: #ecf0f1;
+                background-color: #212121;
+                color: #a0a0a0;
 
                 transition: background-color .3s;
             }
 
             .btn:hover, .btn:focus {
-                background-color: #7F7F7F;
+                background-color: #707070;
             }
 
             .btn > * {
@@ -156,8 +174,8 @@
 
             .btnDisabled {
 
-                background-color: #212121;
-                color: #a0a0a0;
+                background-color: #414141;
+                color: #ecf0f1;
                 pointer-events: none;
                 -webkit-touch-callout: none;
                 -webkit-user-select: none;
@@ -182,11 +200,12 @@
 
 	<body>
         <div id="myNav" class="overlay">
-          <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-          <div class="overlay-content">
-            <button id="rust" class="btn btnDisabled" onClick="javascript:changeMaterial('rust');">Rust</button>
-            <button id="military" class="btn" onClick="javascript:changeMaterial('military');">Military</button>
-          </div>
+            <a class="overlayTitle">Materials</a>
+            <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+            <div class="overlay-content">
+                <button id="military" class="btn btnDisabled" onClick="javascript:changeMaterial('military');">Military</button>
+                <button id="rust" class="btn" onClick="javascript:changeMaterial('rust');">Rust</button>
+            </div>
         </div>
 
         <button id="menuBtn" class="btn menuBtn" onclick="openNav()">&#9776; Materials</button>
@@ -375,7 +394,7 @@
 		<!-- three.js code -->
 
 		<script>
-            var selected = "rust", loaded = {"rust":false,"military":false};
+            var selected = "military", loaded = {"rust":false,"military":false};
 
 			var startDragX = null, startDragY = null;
 			var center = new THREE.Vector3(0,5,0);
@@ -842,7 +861,7 @@
 
 
         function openNav() {
-            document.getElementById("myNav").style.width = "200px";
+            document.getElementById("myNav").style.width = "220px";
             document.getElementById("menuBtn").style.visibility = "hidden";
         }
 
