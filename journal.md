@@ -1,27 +1,21 @@
+## Jun 9, 2018
+- Problema: non riusciamo a esportare normali e specular soddisfacenti con Blender.  Le normali che esportiamo ci sembrano troppo piatte e variando la loro intensità con un parametro NormalScale in Threejs non otteniamo un risultato realistico. Le specualari invece sono troppo bianche. Soluzione: importiamo nel sito http://cpetry.github.io/NormalMap-Online/ la diffuse già adattata al modello (con la forma ritagliata  da Blender) ed estriamo la normale e la specular. Siamo consapevoli che questo procedimento non è consigliabile ma il risultato ci sembra molto buono e con il poco tempo che ci rimane decidiamo di accettare il risultato.
+- Modifichiamo con photoshop la specular modificando luminosità e contrasto per ottenere il grado di riflesso che ci sembra più opportuno.
+- Partendo dalle specular le modifichiamo con photosohop per ottenere delle roughnessMap.
+
 ## Jun 8, 2018
-- inizio sito 
-- Test luci e AO index3
-- movimento definitivo gambe
-- Test luci
-- Test posizione camera e luci
-- FIX gestione luci multiple
-- rotazione guns e posizionamento luci
-- Aggiustamento texture e normal scale
-- Sistemazione reflection e texture
+- Scelta una EM più accurata e aggiunta alla scena
+- Implementazione rotazione delle canne della mitragliatrici
+- Posizionamento luce nella scena
+- Gestione luci multiple
+- Aggiunte texture AO
+- Inizio imlmentazione della struttuta HTML per la cornice dell'ECommerce
 
 ## Jun 7, 2018
-- Mdofica texture body
-- screenshot diego
-- rimozione normale modelli e implementazione movimento gambe alternate
-- Test texture body
-- Sistemazione cartella modelli/Aggiunta modelli finali
-- Aggiunta glossy index3 e modifica normali
-- implementazione movimento 4 gambe robot
-- linkata libreria
-- aggiunta libreria tweenjs
-- implementazione tween
-- Test texture body
-- aggiunte textures
+- Perfezionamento tweens: scelta easing più appropriato.
+- Assemblaggio robot completo di gambe, cannoni e movimenti.
+- Fix del movimento alternato delle gambe.
+- Editing delle texture con Blender. Problemi con le normali e le specular.
 
 ## Jun 6, 2018
 - Finiamo l'estrazione di tutte le parti del corpo del robot. Inizamo con l'assemblaggio in Threejs.
@@ -37,12 +31,14 @@
 ## Jun 5, 2018
 - Continua la fase di estrazione delle parti del robot con Maya
 - Iniziamo intanto a studiare anche Blender per trovare delle possibili texture per il nostro robot.
+![Blender](images/blender.png)
 
 ## Jun 4, 2018
-- Con Maya riusciamo a montare senza sforzi il modello del robot definitivo senza dover maneggiare ogni sua componente. Riusciamo a esportarlo come un unico oggetto assemblato e troviamo una funzione in Maya che ci permette di semplificare il modello togliendo un numero prestabiliti di vertici. Non otteniamo un risultato eccellente ma ci accontentiamo, ora il nostro modello conto 99.999 vertici. 
+- Facciamo anche qualche prova di inserimento EM e IEM su un file di test a parte.
+- Nel frattempo con Maya riusciamo a montare senza sforzi il modello del robot definitivo senza dover maneggiare ogni sua componente. Riusciamo a esportarlo come un unico oggetto assemblato e troviamo una funzione in Maya che ci permette di semplificare il modello togliendo un numero prestabiliti di vertici. Non otteniamo un risultato eccellente ma ci accontentiamo, ora il nostro modello conto 99.999 vertici. 
 - Ci poniamo il problema che a questo punto, dato che abbiamo un oggetto unico fissato e statico non saremo più in grado di spostare determinate sue parti per una possibile animazione.
-- La soluzione la troviamo modellandolo con Maya. Dobbiamo esportare come un oggetto a sè stante ogni sua parte di cui prevediamo un movimento indipendente dal resto del corpo. Da qui inizierà una lunga fase di pazienza per isolare: le canne, il copro centrale e ben quattro componenti della gamba.
-- Nel frattempo facciamo anche qualche prova di inserimento EM e IEM su un file di test a parte.
+- La soluzione la troviamo modellandolo con Maya. Dobbiamo esportare come un oggetto a sè stante ogni sua parte di cui prevediamo un movimento indipendente dal resto del corpo. Da qui inizierà una lunga fase di pazienza per isolare: le canne, il copro centrale e ben quattro componenti della gamba. A seguito uno screenshot di questa fase:
+![Maya](images/maya.png)
 
 ## Jun 3, 2018
 - Decidiamo di procedere, per il momento, all'implementazione parallela del robot e del drago. Non abbiamo idea del lavoro che ci richiederà il robot e in ogni caso se non riusciamo ad implementare un'animazione al robot, il drago ci sembra un modello più interessante. Meglio avere un secondo progetto di scorta.
