@@ -1,5 +1,6 @@
 # Descrizione Generale
 Il nostro progetto prevede il rendering di un robot da guerra. L'utente ha la possibilità di visualizzare il robot in una versione "appena uscito da fabbrica" e una con i metalli arruginiti. Tuttavia abbiamo pensato che alcune parti costruite idealmente con metalli cromati non debbano arrguginire e rimangano pertanto invariati nelle due visualizzazioni. Il robot presenta inoltre una base in roccia per attenuare il rinculo degli spari e dare maggior stabilità. Anch'esso infatti viene visualizzato in una versione "pulita" e una versione invecchiata, sporca e con del muschio.
+
 ![Military](images/military.png)
 ![Rust](images/rust.png)
 
