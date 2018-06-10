@@ -1,3 +1,9 @@
+## Jun 10, 2018
+- Installazione finale di tutta la scena
+- Rimplementazione dei controlli per limitare alcuni movimenti
+- Fissaggio delle luci solidali alla camera
+- Readme e Journal
+
 ## Jun 9, 2018
 - Problema: non riusciamo a esportare normali e specular soddisfacenti con Blender.  Le normali che esportiamo ci sembrano troppo piatte e variando la loro intensità con un parametro NormalScale in Threejs non otteniamo un risultato realistico. Le specualari invece sono troppo bianche. Soluzione: importiamo nel sito http://cpetry.github.io/NormalMap-Online/ la diffuse già adattata al modello (con la forma ritagliata  da Blender) ed estriamo la normale e la specular. Siamo consapevoli che questo procedimento non è consigliabile ma il risultato ci sembra molto buono e con il poco tempo che ci rimane decidiamo di accettare il risultato.
 - Modifichiamo con photoshop la specular modificando luminosità e contrasto per ottenere il grado di riflesso che ci sembra più opportuno.
@@ -43,6 +49,7 @@
 ## Jun 3, 2018
 - Decidiamo di procedere, per il momento, all'implementazione parallela del robot e del drago. Non abbiamo idea del lavoro che ci richiederà il robot e in ogni caso se non riusciamo ad implementare un'animazione al robot, il drago ci sembra un modello più interessante. Meglio avere un secondo progetto di scorta.
 - Ci accorgiamo che il robot ha circa 270 mila vertici (non rispetta i requisiti del progetto) e threejs non lo vede come un oggetto unico bensì come circa 200 oggetti (non allineati!) che compongono il robot finale.
+![Pieces](images/pieces.png)
 - Iniziamo a studiare Autodesk Maya per trovare qualche soluzione...
 
 ## Jun 2, 2018
