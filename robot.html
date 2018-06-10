@@ -1,200 +1,29 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
- "http://www.w3c.org/TR/xhtml1/DTD/xhtml11.dtd">
-
-<html xmlns="http://www.w3.org/1999/XHTML" xml:lang="it" lang="it">
+<!DOCTYPE html>
+<html lang="en">
 	<head>
-        <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-        <style>
-            html {
-                font-family: 'Roboto', sans-serif;
-            }
+		<title>Robot</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				background-color: #f0f0f0;
+				margin: 0px;
+				overflow: hidden;
+			}
 
-            body {
-                background-color: #f0f0f0;
-                margin: 0px;
-                overflow: hidden;
-            }
+			a {
+				color: #000;
+				text-decoration: none;
+			}
 
-            .menuBtn {
-                font-size:30px;
-                cursor:pointer;
-                color: white;
-                position: fixed !important;
-                top: 2px;
-                left: 5px;
-                z-index: 1;
-                vertical-align: middle;
-                background-color: rgba(0,0,0,0.3) !important
-            }
-
-            .menuBtnOrder {
-                font-size:30px;
-                cursor:pointer;
-                color: white;
-                position: fixed !important;
-                top: 2px;
-                right: 5px;
-                z-index: 1;
-                vertical-align: middle;
-                background-color: rgba(0,0,0,0.3) !important
-            }
-
-            .overlay {
-                height: 100%;
-                width: 0;
-                position: fixed;
-                z-index: 2;
-                top: 0;
-                left: 0;
-                background-color: rgb(0,0,0);
-                background-color: rgba(0,0,0, 0.9);
-                overflow-x: hidden;
-                transition: 0.5s;
-            }
-
-            .overlay-content {
-                position: relative;
-                left: 0;
-                top: 7%;
-                width: 100%;
-                text-align: center;
-            }
-
-            .overlay a {
-                padding: 8px;
-                text-decoration: none;
-                font-size: 36px;
-                color: #818181;
-                display: block;
-                transition: 0.3s;
-            }
-
-            .overlay a:hover, .overlay a:focus {
-                color: #f1f1f1;
-            }
-
-            .overlay .closebtn {
-                position: absolute;
-                top: 0px;
-                right: 10px;
-                font-size: 60px;
-            }
-
-            @media screen and (max-height: 450px) {
-              .overlay a {font-size: 20px}
-              .overlay .closebtn {
-                font-size: 40px;
-                top: 0;
-                right: 35px;
-              }
-            }
-
-            .btn {
-                position: relative;
-
-                width: 180px;
-                height: 50px;
-
-                display: block;
-                margin: 10px auto;
-                padding: 0;
-
-                overflow: hidden;
-
-                border-width: 0;
-                outline: none;
-                border-radius: 2px;
-                box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
-
-                background-color: #414141;
-                color: #ecf0f1;
-
-                transition: background-color .3s;
-            }
-
-            .btn:hover, .btn:focus {
-                background-color: #7F7F7F;
-            }
-
-            .btn > * {
-                position: relative;
-            }
-
-            .btn span {
-              display: block;
-              padding: 12px 24px;
-            }
-
-            .btn:before {
-              content: "";
-
-              position: absolute;
-              top: 50%;
-              left: 50%;
-
-              display: block;
-              width: 0;
-              padding-top: 0;
-
-              border-radius: 100%;
-
-              background-color: rgba(236, 240, 241, .3);
-
-              -webkit-transform: translate(-50%, -50%);
-              -moz-transform: translate(-50%, -50%);
-              -ms-transform: translate(-50%, -50%);
-              -o-transform: translate(-50%, -50%);
-              transform: translate(-50%, -50%);
-            }
-
-            .btn:active:before {
-              width: 120%;
-              padding-top: 120%;
-
-              /*transition: width .2s ease-out, padding-top .2s ease-out;*/
-            }
-
-            .btnDisabled {
-
-                background-color: #212121;
-                color: #a0a0a0;
-                pointer-events: none;
-                -webkit-touch-callout: none;
-                -webkit-user-select: none;
-                -khtml-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
-
-            }
-
-            /* Styles, not important */
-            *, *:before, *:after {
-              box-sizing: border-box;
-            }
-
-            </style>
-
-		<title>
-			Robot
-		</title>
+			a:hover {
+				color: #0080ff;
+			}
+		</style>
 	</head>
-
 	<body>
-        <div id="myNav" class="overlay">
-          <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-          <div class="overlay-content">
-            <button id="rust" class="btn btnDisabled" onClick="javascript:changeMaterial('rust');">Rust</button>
-            <button id="military" class="btn" onClick="javascript:changeMaterial('military');">Military</button>
-          </div>
-        </div>
 
-        <button id="menuBtn" class="btn menuBtn" onclick="openNav()">&#9776; Materials</button>
-        <button id="menuBtn" class="btn menuBtnOrder" onclick="">Order now</button>
-
-        <!-- ********** robot ************ -->
-
-        <script src="lib/three.min.js"></script>
+		<script src="lib/three.min.js"></script>
 		<script src='lib/OBJLoader.js'></script>
 		<script src='lib/Tween.js'></script>
 
@@ -375,8 +204,6 @@
 		<!-- three.js code -->
 
 		<script>
-            var selected = "rust", loaded = {"rust":false,"military":false};
-
 			var startDragX = null, startDragY = null;
 			var center = new THREE.Vector3(0,5,0);
 
@@ -456,41 +283,33 @@
 
 			var materials = [];
 
-            var normalMap = [{},{},{},{},{},{}];
-            var diffuseMap = [{},{},{},{},{},{}];
-            var specularMap = [{},{},{},{},{},{}];
-            var roughnessMap = [{},{},{},{},{},{}];
-            var aoMap = [{},{},{},{},{},{}];
-
-            var uniforms = [];
+			var material = "military";
 
 			for(let i=0; i<6; i++){
-				var path = "model/robot/" + i + "/" + selected + "/";
-				normalMap[i][selected] = loadTexture( path + "norm.png" );
-				diffuseMap[i][selected] = loadTexture( path + "diff.png" );
-				specularMap[i][selected] = loadTexture( path + "mir.png" );
-				roughnessMap[i][selected] = loadTexture( path + "rough.png" );
-				aoMap[i][selected] = loadTexture( path + "ao.png" );
+				var path = "model/robot/" + i + "/" + material + "/";
+				var normalMap = loadTexture( path + "norm.png" );
+				var diffuseMap = loadTexture( path + "diff.png" );
+				var specularMap = loadTexture( path + "mir.png" );
+				var roughnessMap = loadTexture( path + "rough.png" );
+				var aoMap = loadTexture( path + "ao.png" );
 
-				uniforms[i] = {
+				var uniforms = {
 						pointLightPosition:	{ type: "v3", value: lightPos },
 						clight:	{ type: "v3", value: clights },
 						envMap:	{ type: "t", value: textureCube},
-						roughnessMap: {type: "t", value: roughnessMap[i][selected]},
+						roughnessMap: {type: "t", value: roughnessMap},
 						irradianceMap: { type: "t", value: irradianceMap},
-						aoMap: { type: "t", value: aoMap[i][selected]},
-						normalMap: { type: "t", value: normalMap[i][selected]},
-						diffuseMap: { type: "t", value: diffuseMap[i][selected]},
-						specularMap: { type: "t", value: specularMap[i][selected]}
+						aoMap: { type: "t", value: aoMap},
+						normalMap: { type: "t", value: normalMap},
+						diffuseMap: { type: "t", value: diffuseMap},
+						specularMap: { type: "t", value: specularMap}
 						};
 
-				materials[i] = new THREE.ShaderMaterial({ uniforms: uniforms[i], vertexShader: vs, fragmentShader: fs, extensions: materialExtensions });
+				materials[i] = new THREE.ShaderMaterial({ uniforms: uniforms, vertexShader: vs, fragmentShader: fs, extensions: materialExtensions });
 
 				materials[i].needsUpdate = true;
 
 			}
-
-            loaded[selected] = true;
 
 			var loader = new THREE.OBJLoader();
 
@@ -811,57 +630,10 @@
 				renderer.render( scene, camera );
 			}
 
-            function checkLoaded(sel){
+			init();
+			update();
+			render();
 
-                if(!loaded[sel]){
-                    for(let i=0; i<6; i++){
-                        var path = "model/robot/" + i + "/" + sel + "/";
-        				normalMap[i][sel] = loadTexture( path + "norm.png" );
-        				diffuseMap[i][sel] = loadTexture( path + "diff.png" );
-        				specularMap[i][sel] = loadTexture( path + "mir.png" );
-        				roughnessMap[i][sel] = loadTexture( path + "rough.png" );
-        				aoMap[i][sel] = loadTexture( path + "ao.png" );
-        			}
-                    loaded[sel] = true;
-                }
-
-                for(let i=0; i<6; i++){
-                    materials[i].uniforms.diffuseMap = {type: "t", value: diffuseMap[i][sel]};
-                    materials[i].uniforms.roughnessMap = {type: "t", value: roughnessMap[i][sel]};
-                    materials[i].uniforms.aoMap = {type: "t", value: aoMap[i][sel]};
-                    materials[i].uniforms.normalMap = {type: "t", value: normalMap[i][sel]};
-                    materials[i].uniforms.specularMap = {type: "t", value: specularMap[i][sel]};
-                }
-            }
-
-            init();
-            update();
-            render();
-
-        // *****************************
-
-
-        function openNav() {
-            document.getElementById("myNav").style.width = "200px";
-            document.getElementById("menuBtn").style.visibility = "hidden";
-        }
-
-        function closeNav() {
-            document.getElementById("myNav").style.width = "0%";
-            document.getElementById("menuBtn").style.visibility = "visible";
-        }
-
-        function changeMaterial(index){
-            if(selected !== index){
-                document.getElementById(index).classList.add("btnDisabled");
-                document.getElementById(selected).classList.remove("btnDisabled");
-
-                selected = index;
-                checkLoaded(selected);
-
-                closeNav();
-            }
-        }
-        </script>
+		</script>
 	</body>
 </html>
